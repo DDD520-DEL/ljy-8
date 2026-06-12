@@ -8,7 +8,7 @@ router.get('/list', authMiddleware, notificationController.getNotifications.bind
 router.get('/unread-count', authMiddleware, notificationController.getUnreadCount.bind(notificationController));
 router.put('/:id/read', authMiddleware, notificationController.markAsRead.bind(notificationController));
 router.put('/read-all', authMiddleware, notificationController.markAllAsRead.bind(notificationController));
-router.delete('/:id', authMiddleware, notificationController.deleteNotification.bind(notificationController));
 router.delete('/batch', authMiddleware, notificationController.deleteMany.bind(notificationController));
+router.delete('/:id', authMiddleware, notificationController.deleteNotification.bind(notificationController));
 
 export default router;
