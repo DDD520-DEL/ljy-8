@@ -203,3 +203,24 @@ export interface QueueNotification {
   read: boolean;
   createdAt: string;
 }
+
+export type NotificationType =
+  | 'order_status'
+  | 'dispute_status'
+  | 'new_review'
+  | 'queue_turn'
+  | 'queue_expired'
+  | 'queue_cancelled'
+  | 'system';
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  relatedId?: string;
+  relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue';
+  read: boolean;
+  createdAt: string;
+}

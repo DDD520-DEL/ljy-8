@@ -14,6 +14,7 @@ import OrderDetail from './pages/OrderDetail';
 import Disputes from './pages/Disputes';
 import DisputeDetail from './pages/DisputeDetail';
 import Profile from './pages/Profile';
+import Notifications from './pages/Notifications';
 import { useAuthStore } from './store/authStore';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -93,6 +94,14 @@ function App() {
           element={
             <PrivateRoute>
               <Profile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="notifications"
+          element={
+            <PrivateRoute>
+              <Notifications />
             </PrivateRoute>
           }
         />

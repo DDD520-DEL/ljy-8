@@ -2,8 +2,14 @@ import { disputeRepository } from '../repositories/DisputeRepository';
 import { orderRepository } from '../repositories/OrderRepository';
 import { Dispute, DisputeWithDetails, DisputeStatus } from '../types';
 import { timeCoinService } from './TimeCoinService';
+import { notificationService } from './NotificationService';
 
 export class DisputeService {
+  private statusText: Record<DisputeStatus, string> = {
+    pending: '待处理',
+    reviewing: '审核中',
+    resolved: '已解决',
+  };
   public getDisputes(userId: string, role?: 'complainant' | 'respondent' | 'all'): DisputeWithDetails[] {
     let disputes;
     
@@ -38,18 +44,23 @@ export class DisputeService {
     disputeData: Omit<Dispute, 'id' | 'complainantId' | 'createdAt' | 'status'>
   ): DisputeWithDetails | null {
     let respondentId: string | undefined;
+    let orderTitle = '';
     
     if (disputeData.orderType === 'borrow') {
       const order = orderRepository.findBorrowOrderById(disputeData.orderId);
       if (order) {
         respondentId = order.borrowerId === complainantId ? order.lenderId : order.borrowerId;
         orderRepository.updateBorrowOrder(disputeData.orderId, { status: 'disputed' });
+        const item = orderRepository.toBorrowOrderWithDetails(order).item;
+        orderTitle = item?.title || '';
       }
     } else {
       const order = orderRepository.findServiceOrderById(disputeData.orderId);
       if (order) {
         respondentId = order.clientId === complainantId ? order.providerId : order.clientId;
         orderRepository.updateServiceOrder(disputeData.orderId, { status: 'disputed' });
+        const skill = orderRepository.toServiceOrderWithDetails(order).skill;
+        orderTitle = skill?.title || '';
       }
     }
 
@@ -62,6 +73,13 @@ export class DisputeService {
       complainantId,
       respondentId,
     });
+
+    notificationService.sendDisputeStatusNotification(
+      respondentId,
+      dispute.id,
+      this.statusText.pending,
+      orderTitle
+    );
 
     return disputeRepository.toDisputeWithDetails(dispute);
   }
@@ -100,6 +118,34 @@ export class DisputeService {
       }
     }
 
+    let orderTitle = '';
+    if (dispute.orderType === 'borrow') {
+      const order = orderRepository.findBorrowOrderById(dispute.orderId);
+      if (order) {
+        const item = orderRepository.toBorrowOrderWithDetails(order).item;
+        orderTitle = item?.title || '';
+      }
+    } else {
+      const order = orderRepository.findServiceOrderById(dispute.orderId);
+      if (order) {
+        const skill = orderRepository.toServiceOrderWithDetails(order).skill;
+        orderTitle = skill?.title || '';
+      }
+    }
+
+    notificationService.sendDisputeStatusNotification(
+      dispute.complainantId,
+      disputeId,
+      this.statusText.resolved,
+      orderTitle
+    );
+    notificationService.sendDisputeStatusNotification(
+      dispute.respondentId,
+      disputeId,
+      this.statusText.resolved,
+      orderTitle
+    );
+
     const updated = disputeRepository.findById(disputeId);
     return updated ? disputeRepository.toDisputeWithDetails(updated) : null;
   }
@@ -114,6 +160,34 @@ export class DisputeService {
       status: 'reviewing' as DisputeStatus,
       resolverId,
     });
+
+    let orderTitle = '';
+    if (dispute.orderType === 'borrow') {
+      const order = orderRepository.findBorrowOrderById(dispute.orderId);
+      if (order) {
+        const item = orderRepository.toBorrowOrderWithDetails(order).item;
+        orderTitle = item?.title || '';
+      }
+    } else {
+      const order = orderRepository.findServiceOrderById(dispute.orderId);
+      if (order) {
+        const skill = orderRepository.toServiceOrderWithDetails(order).skill;
+        orderTitle = skill?.title || '';
+      }
+    }
+
+    notificationService.sendDisputeStatusNotification(
+      dispute.complainantId,
+      disputeId,
+      this.statusText.reviewing,
+      orderTitle
+    );
+    notificationService.sendDisputeStatusNotification(
+      dispute.respondentId,
+      disputeId,
+      this.statusText.reviewing,
+      orderTitle
+    );
 
     const updated = disputeRepository.findById(disputeId);
     return updated ? disputeRepository.toDisputeWithDetails(updated) : null;

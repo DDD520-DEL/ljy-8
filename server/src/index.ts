@@ -8,6 +8,7 @@ import orderRoutes from './routes/orders';
 import reviewRoutes from './routes/reviews';
 import disputeRoutes from './routes/disputes';
 import queueRoutes from './routes/queue';
+import notificationRoutes from './routes/notifications';
 import { db } from './utils/db';
 import { initializeSampleData } from './utils/initData';
 import { queueService } from './services/QueueService';
@@ -30,6 +31,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/disputes', disputeRoutes);
 app.use('/api/queue', queueRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/api/health', (_req: express.Request, res: express.Response) => {
   res.json({ success: true, message: '邻里共享平台服务运行中' });

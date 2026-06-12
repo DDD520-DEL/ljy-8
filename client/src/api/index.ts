@@ -135,4 +135,17 @@ export const queueApi = {
     request('/queue/notifications/read-all', { method: 'PUT' }),
 };
 
+export const notificationApi = {
+  getNotifications: () => request('/notifications/list'),
+  getUnreadCount: () => request('/notifications/unread-count'),
+  markAsRead: (id: string) =>
+    request(`/notifications/${id}/read`, { method: 'PUT' }),
+  markAllAsRead: () =>
+    request('/notifications/read-all', { method: 'PUT' }),
+  deleteNotification: (id: string) =>
+    request(`/notifications/${id}`, { method: 'DELETE' }),
+  deleteMany: (ids: string[]) =>
+    request('/notifications/batch', { method: 'DELETE', data: { ids } }),
+};
+
 export default api;

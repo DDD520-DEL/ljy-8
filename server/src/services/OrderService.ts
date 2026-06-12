@@ -12,8 +12,27 @@ import {
 import { timeCoinService } from './TimeCoinService';
 import { getCurrentTime } from '../utils/helpers';
 import { queueService } from './QueueService';
+import { notificationService } from './NotificationService';
 
 export class OrderService {
+  private borrowStatusText: Record<BorrowOrderStatus, string> = {
+    pending: '待审批',
+    approved: '已通过',
+    rejected: '已拒绝',
+    borrowing: '借用中',
+    returned: '已归还',
+    disputed: '纠纷中',
+  };
+
+  private serviceStatusText: Record<ServiceOrderStatus, string> = {
+    pending: '待审批',
+    approved: '已通过',
+    rejected: '已拒绝',
+    in_progress: '服务中',
+    completed: '已完成',
+    disputed: '纠纷中',
+  };
+
   // Borrow Orders
   public getBorrowOrders(userId: string, role: 'borrower' | 'lender' | 'all'): BorrowOrderWithDetails[] {
     let orders;
@@ -51,6 +70,14 @@ export class OrderService {
       message: request.message,
     });
 
+    notificationService.sendOrderStatusNotification(
+      item.ownerId,
+      order.id,
+      'borrow',
+      this.borrowStatusText.pending,
+      item.title
+    );
+
     return orderRepository.toBorrowOrderWithDetails(order);
   }
 
@@ -62,6 +89,15 @@ export class OrderService {
 
     orderRepository.updateBorrowOrder(orderId, { status: 'approved' as BorrowOrderStatus });
     orderRepository.addBorrowTimelineEvent(orderId, '出借方已同意借用申请', lenderId);
+    
+    const item = itemRepository.findById(order.itemId);
+    notificationService.sendOrderStatusNotification(
+      order.borrowerId,
+      orderId,
+      'borrow',
+      this.borrowStatusText.approved,
+      item?.title || ''
+    );
     
     const updated = orderRepository.findBorrowOrderById(orderId);
     return updated ? orderRepository.toBorrowOrderWithDetails(updated) : null;
@@ -75,6 +111,15 @@ export class OrderService {
 
     orderRepository.updateBorrowOrder(orderId, { status: 'rejected' as BorrowOrderStatus });
     orderRepository.addBorrowTimelineEvent(orderId, `出借方已拒绝借用申请${reason ? '：' + reason : ''}`, lenderId);
+    
+    const item = itemRepository.findById(order.itemId);
+    notificationService.sendOrderStatusNotification(
+      order.borrowerId,
+      orderId,
+      'borrow',
+      this.borrowStatusText.rejected,
+      item?.title || ''
+    );
     
     const updated = orderRepository.findBorrowOrderById(orderId);
     return updated ? orderRepository.toBorrowOrderWithDetails(updated) : null;
@@ -90,6 +135,15 @@ export class OrderService {
     orderRepository.addBorrowTimelineEvent(orderId, '物品已借出', lenderId);
     
     itemRepository.update(order.itemId, { status: 'borrowed' });
+    
+    const item = itemRepository.findById(order.itemId);
+    notificationService.sendOrderStatusNotification(
+      order.borrowerId,
+      orderId,
+      'borrow',
+      this.borrowStatusText.borrowing,
+      item?.title || ''
+    );
     
     const updated = orderRepository.findBorrowOrderById(orderId);
     return updated ? orderRepository.toBorrowOrderWithDetails(updated) : null;
@@ -110,6 +164,15 @@ export class OrderService {
     itemRepository.update(order.itemId, { status: 'available' });
 
     queueService.notifyNextInQueue(order.itemId);
+    
+    const item = itemRepository.findById(order.itemId);
+    notificationService.sendOrderStatusNotification(
+      order.borrowerId,
+      orderId,
+      'borrow',
+      this.borrowStatusText.returned,
+      item?.title || ''
+    );
     
     const updated = orderRepository.findBorrowOrderById(orderId);
     return updated ? orderRepository.toBorrowOrderWithDetails(updated) : null;
@@ -157,6 +220,14 @@ export class OrderService {
       message: request.message,
     });
 
+    notificationService.sendOrderStatusNotification(
+      skill.providerId,
+      order.id,
+      'service',
+      this.serviceStatusText.pending,
+      skill.title
+    );
+
     return orderRepository.toServiceOrderWithDetails(order);
   }
 
@@ -171,6 +242,15 @@ export class OrderService {
     orderRepository.updateServiceOrder(orderId, { status: 'approved' as ServiceOrderStatus });
     orderRepository.addServiceTimelineEvent(orderId, '服务方已同意服务申请', providerId);
     
+    const skill = skillRepository.findById(order.skillId);
+    notificationService.sendOrderStatusNotification(
+      order.clientId,
+      orderId,
+      'service',
+      this.serviceStatusText.approved,
+      skill?.title || ''
+    );
+    
     const updated = orderRepository.findServiceOrderById(orderId);
     return updated ? orderRepository.toServiceOrderWithDetails(updated) : null;
   }
@@ -184,6 +264,15 @@ export class OrderService {
     orderRepository.updateServiceOrder(orderId, { status: 'rejected' as ServiceOrderStatus });
     orderRepository.addServiceTimelineEvent(orderId, `服务方已拒绝服务申请${reason ? '：' + reason : ''}`, providerId);
     
+    const skill = skillRepository.findById(order.skillId);
+    notificationService.sendOrderStatusNotification(
+      order.clientId,
+      orderId,
+      'service',
+      this.serviceStatusText.rejected,
+      skill?.title || ''
+    );
+    
     const updated = orderRepository.findServiceOrderById(orderId);
     return updated ? orderRepository.toServiceOrderWithDetails(updated) : null;
   }
@@ -196,6 +285,15 @@ export class OrderService {
 
     orderRepository.updateServiceOrder(orderId, { status: 'in_progress' as ServiceOrderStatus });
     orderRepository.addServiceTimelineEvent(orderId, '服务进行中', providerId);
+    
+    const skill = skillRepository.findById(order.skillId);
+    notificationService.sendOrderStatusNotification(
+      order.clientId,
+      orderId,
+      'service',
+      this.serviceStatusText.in_progress,
+      skill?.title || ''
+    );
     
     const updated = orderRepository.findServiceOrderById(orderId);
     return updated ? orderRepository.toServiceOrderWithDetails(updated) : null;
@@ -211,6 +309,15 @@ export class OrderService {
 
     orderRepository.updateServiceOrder(orderId, { status: 'completed' as ServiceOrderStatus });
     orderRepository.addServiceTimelineEvent(orderId, '服务已完成', clientId);
+    
+    const skill = skillRepository.findById(order.skillId);
+    notificationService.sendOrderStatusNotification(
+      order.providerId,
+      orderId,
+      'service',
+      this.serviceStatusText.completed,
+      skill?.title || ''
+    );
     
     const updated = orderRepository.findServiceOrderById(orderId);
     return updated ? orderRepository.toServiceOrderWithDetails(updated) : null;

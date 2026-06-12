@@ -1,6 +1,9 @@
 import { reviewRepository } from '../repositories/ReviewRepository';
+import { userRepository } from '../repositories/UserRepository';
+import { orderRepository } from '../repositories/OrderRepository';
 import { Review, ReviewWithUser } from '../types';
 import { creditService } from './CreditService';
+import { notificationService } from './NotificationService';
 
 export class ReviewService {
   public getReviewsByUser(userId: string): ReviewWithUser[] {
@@ -34,6 +37,29 @@ export class ReviewService {
     });
 
     creditService.updateCreditScore(reviewData.revieweeId, reviewData.rating);
+
+    const reviewer = userRepository.findById(reviewerId);
+    let orderTitle = '';
+    if (reviewData.orderType === 'borrow') {
+      const order = orderRepository.findBorrowOrderById(reviewData.orderId);
+      if (order) {
+        const item = orderRepository.toBorrowOrderWithDetails(order).item;
+        orderTitle = item?.title || '';
+      }
+    } else {
+      const order = orderRepository.findServiceOrderById(reviewData.orderId);
+      if (order) {
+        const skill = orderRepository.toServiceOrderWithDetails(order).skill;
+        orderTitle = skill?.title || '';
+      }
+    }
+
+    notificationService.sendNewReviewNotification(
+      reviewData.revieweeId,
+      reviewer?.nickname || '匿名用户',
+      reviewData.rating,
+      orderTitle
+    );
 
     return reviewRepository.toReviewWithUser(review);
   }

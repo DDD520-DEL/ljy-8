@@ -1,8 +1,8 @@
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { queueApi } from '../api';
-import type { QueueNotification } from '../types';
+import { notificationApi } from '../api';
+import type { Notification } from '../types';
 
 function Layout() {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ function Layout() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<QueueNotification[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -21,14 +21,14 @@ function Layout() {
   }, [isAuthenticated]);
 
   const loadUnreadCount = async () => {
-    const res = await queueApi.getUnreadNotificationCount();
+    const res = await notificationApi.getUnreadCount();
     if (res.success) {
       setUnreadCount(res.data?.count || 0);
     }
   };
 
   const handleOpenNotifications = async () => {
-    const res = await queueApi.getNotifications();
+    const res = await notificationApi.getNotifications();
     if (res.success) {
       setNotifications(res.data || []);
     }
@@ -44,16 +44,41 @@ function Layout() {
     navigate('/login');
   };
 
-  const goToNotification = async (notification: QueueNotification) => {
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'order_status':
+        return '📦';
+      case 'dispute_status':
+        return '⚖️';
+      case 'new_review':
+        return '⭐';
+      case 'queue_turn':
+        return '🔔';
+      case 'queue_expired':
+        return '⏰';
+      case 'queue_cancelled':
+        return '❌';
+      case 'system':
+        return '📢';
+      default:
+        return '📧';
+    }
+  };
+
+  const goToNotification = async (notification: Notification) => {
     if (!notification.read) {
-      await queueApi.markNotificationAsRead(notification.id);
+      await notificationApi.markAsRead(notification.id);
       loadUnreadCount();
     }
     setShowNotifications(false);
-    if (notification.type === 'queue_turn') {
-      navigate(`/items/${notification.itemId}`);
+    if (notification.relatedType === 'borrow_order' || notification.relatedType === 'service_order') {
+      navigate(`/orders/${notification.relatedId}`);
+    } else if (notification.relatedType === 'dispute') {
+      navigate(`/disputes/${notification.relatedId}`);
+    } else if (notification.relatedType === 'item') {
+      navigate(`/items/${notification.relatedId}`);
     } else {
-      navigate('/profile', { state: { tab: 'notifications' } });
+      navigate('/notifications');
     }
   };
 
@@ -134,7 +159,7 @@ function Layout() {
                 <button
                   className="btn-link"
                   onClick={async () => {
-                    await queueApi.markAllNotificationsAsRead();
+                    await notificationApi.markAllAsRead();
                     loadUnreadCount();
                     setNotifications(notifications.map((n) => ({ ...n, read: true })));
                   }}
@@ -157,9 +182,10 @@ function Layout() {
                     onClick={() => goToNotification(notification)}
                   >
                     <span className="notification-type-icon">
-                      {notification.type === 'queue_turn' ? '🔔' : notification.type === 'queue_expired' ? '⏰' : '📧'}
+                      {getNotificationIcon(notification.type)}
                     </span>
                     <div className="notification-popup-content">
+                      <p className="notification-popup-title">{notification.title}</p>
                       <p className="notification-popup-message">{notification.message}</p>
                       <p className="notification-popup-time">
                         {new Date(notification.createdAt).toLocaleString()}
@@ -173,7 +199,7 @@ function Layout() {
             {notifications.length > 0 && (
               <div className="notification-popup-footer" onClick={() => {
                 setShowNotifications(false);
-                navigate('/profile', { state: { tab: 'notifications' } });
+                navigate('/notifications');
               }}>
                 查看全部通知 →
               </div>
@@ -358,6 +384,13 @@ function Layout() {
           font-size: 14px;
           color: #333;
           line-height: 1.5;
+          margin-bottom: 4px;
+        }
+        .notification-popup-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #333;
+          line-height: 1.4;
           margin-bottom: 4px;
         }
         .notification-popup-time {
