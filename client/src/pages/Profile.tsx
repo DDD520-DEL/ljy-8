@@ -1,15 +1,32 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { authApi, itemApi, skillApi, reviewApi } from '../api';
-import type { ItemWithOwner, SkillWithProvider, ReviewWithUser } from '../types';
+import { authApi, itemApi, skillApi, reviewApi, queueApi } from '../api';
+import type {
+  ItemWithOwner,
+  SkillWithProvider,
+  ReviewWithUser,
+  QueueEntryWithDetails,
+  QueueNotification,
+} from '../types';
 
 function Profile() {
   const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('info');
   const [myItems, setMyItems] = useState<ItemWithOwner[]>([]);
   const [mySkills, setMySkills] = useState<SkillWithProvider[]>([]);
   const [myReviews, setMyReviews] = useState<ReviewWithUser[]>([]);
+  const [myQueues, setMyQueues] = useState<QueueEntryWithDetails[]>([]);
+  const [notifications, setNotifications] = useState<QueueNotification[]>([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedQueue, setSelectedQueue] = useState<QueueEntryWithDetails | null>(null);
+  const [confirmForm, setConfirmForm] = useState({
+    startDate: '',
+    endDate: '',
+    message: '',
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'items') {
@@ -18,6 +35,10 @@ function Profile() {
       loadMySkills();
     } else if (activeTab === 'reviews') {
       loadMyReviews();
+    } else if (activeTab === 'queues') {
+      loadMyQueues();
+    } else if (activeTab === 'notifications') {
+      loadNotifications();
     }
   }, [activeTab]);
 
@@ -43,6 +64,66 @@ function Profile() {
     }
   };
 
+  const loadMyQueues = async () => {
+    const res = await queueApi.getMyQueues();
+    if (res.success) {
+      setMyQueues(res.data || []);
+    }
+  };
+
+  const loadNotifications = async () => {
+    const res = await queueApi.getNotifications();
+    if (res.success) {
+      setNotifications(res.data || []);
+    }
+  };
+
+  const handleCancelQueue = async (queueId: string) => {
+    if (!confirm('确定要取消排队吗？')) return;
+    const res = await queueApi.cancelQueue(queueId);
+    if (res.success) {
+      alert('已取消排队');
+      loadMyQueues();
+    } else {
+      alert(res.message || '取消失败');
+    }
+  };
+
+  const handleOpenConfirmModal = (queue: QueueEntryWithDetails) => {
+    setSelectedQueue(queue);
+    setConfirmForm({ startDate: '', endDate: '', message: '' });
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedQueue) return;
+    setSubmitting(true);
+    try {
+      const res = await queueApi.confirmQueueBorrow(selectedQueue.id, confirmForm);
+      if (res.success) {
+        alert('确认成功！借用申请已提交');
+        setShowConfirmModal(false);
+        loadMyQueues();
+        navigate('/orders');
+      } else {
+        alert(res.message || '确认失败');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleMarkRead = async (notificationId: string) => {
+    await queueApi.markNotificationAsRead(notificationId);
+    loadNotifications();
+  };
+
+  const handleMarkAllRead = async () => {
+    await queueApi.markAllNotificationsAsRead();
+    loadNotifications();
+  };
+
   const getCreditLevelColor = (level: string) => {
     const colors: Record<string, string> = {
       S: '#f5222d',
@@ -53,6 +134,31 @@ function Profile() {
     };
     return colors[level] || '#999';
   };
+
+  const getQueueStatusInfo = (status: string) => {
+    const map: Record<string, { text: string; color: string; bgColor: string }> = {
+      waiting: { text: '排队中', color: '#1890ff', bgColor: '#e6f7ff' },
+      notified: { text: '待确认', color: '#fa8c16', bgColor: '#fff7e6' },
+      confirmed: { text: '已确认', color: '#52c41a', bgColor: '#f6ffed' },
+      expired: { text: '已超时', color: '#999', bgColor: '#f5f5f5' },
+      cancelled: { text: '已取消', color: '#999', bgColor: '#f5f5f5' },
+      borrowed: { text: '已借用', color: '#52c41a', bgColor: '#f6ffed' },
+    };
+    return map[status] || { text: status, color: '#999', bgColor: '#f5f5f5' };
+  };
+
+  const getNotificationTypeInfo = (type: string) => {
+    const map: Record<string, { icon: string; color: string }> = {
+      queue_turn: { icon: '🔔', color: '#fa8c16' },
+      queue_expired: { icon: '⏰', color: '#999' },
+      queue_cancelled: { icon: '❌', color: '#999' },
+    };
+    return map[type] || { icon: '📧', color: '#667eea' };
+  };
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <div className="container profile-page">
@@ -107,6 +213,19 @@ function Profile() {
           onClick={() => setActiveTab('skills')}
         >
           我的技能
+        </button>
+        <button
+          className={`tab ${activeTab === 'queues' ? 'active' : ''}`}
+          onClick={() => setActiveTab('queues')}
+        >
+          排队记录
+        </button>
+        <button
+          className={`tab ${activeTab === 'notifications' ? 'active' : ''}`}
+          onClick={() => setActiveTab('notifications')}
+        >
+          通知中心
+          {unreadCount > 0 && <span className="tab-badge">{unreadCount}</span>}
         </button>
         <button
           className={`tab ${activeTab === 'reviews' ? 'active' : ''}`}
@@ -247,6 +366,148 @@ function Profile() {
           </div>
         )}
 
+        {activeTab === 'queues' && (
+          <div className="list-section">
+            <div className="section-header">
+              <h3>排队记录</h3>
+            </div>
+            {myQueues.length === 0 ? (
+              <div className="empty-list">
+                <p>暂无排队记录</p>
+                <Link to="/items" className="btn btn-primary">
+                  去逛逛
+                </Link>
+              </div>
+            ) : (
+              <div className="queue-record-list">
+                {myQueues.map((queue) => {
+                  const statusInfo = getQueueStatusInfo(queue.status);
+                  return (
+                    <div key={queue.id} className="queue-record-card">
+                      <Link to={`/items/${queue.itemId}`} className="queue-item-info">
+                        <div className="queue-item-image">
+                          {queue.item.images[0] ? (
+                            <img src={queue.item.images[0]} alt="" />
+                          ) : (
+                            <div className="item-placeholder">📦</div>
+                          )}
+                        </div>
+                        <div className="queue-item-detail">
+                          <h4>{queue.item.title}</h4>
+                          <p className="text-muted">押金 ¥{queue.item.deposit}</p>
+                          <p className="queue-time">
+                            排队时间：{new Date(queue.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </Link>
+                      <div className="queue-record-status">
+                        <span
+                          className="queue-status-tag"
+                          style={{ background: statusInfo.bgColor, color: statusInfo.color }}
+                        >
+                          {statusInfo.text}
+                        </span>
+                        {queue.status === 'waiting' && (
+                          <span className="queue-position-info">
+                            当前第 {queue.position} 位
+                          </span>
+                        )}
+                        {queue.status === 'notified' && queue.expiredAt && (
+                          <span className="queue-expire">
+                            请在 {new Date(queue.expiredAt).toLocaleString()} 前确认
+                          </span>
+                        )}
+                      </div>
+                      <div className="queue-record-actions">
+                        {queue.status === 'waiting' && (
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleCancelQueue(queue.id)}
+                          >
+                            取消排队
+                          </button>
+                        )}
+                        {queue.status === 'notified' && (
+                          <>
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => handleCancelQueue(queue.id)}
+                            >
+                              放弃
+                            </button>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() => handleOpenConfirmModal(queue)}
+                            >
+                              确认借用
+                            </button>
+                          </>
+                        )}
+                        {queue.status === 'confirmed' || queue.status === 'borrowed' ? (
+                          <Link
+                            to="/orders"
+                            className="btn btn-outline btn-sm"
+                          >
+                            查看订单
+                          </Link>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'notifications' && (
+          <div className="list-section">
+            <div className="section-header">
+              <h3>通知中心</h3>
+              {unreadCount > 0 && (
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleMarkAllRead}
+                >
+                  全部已读
+                </button>
+              )}
+            </div>
+            {notifications.length === 0 ? (
+              <div className="empty-list">
+                <p>暂无通知</p>
+              </div>
+            ) : (
+                <div className="notification-list">
+                  {notifications.map((notification) => {
+                    const typeInfo = getNotificationTypeInfo(notification.type);
+                    return (
+                      <div
+                        key={notification.id}
+                        className={`notification-item ${!notification.read ? 'unread' : ''}`}
+                        onClick={() => handleMarkRead(notification.id)}
+                      >
+                        <span className="notification-icon" style={{ background: typeInfo.color + '20', color: typeInfo.color }}
+                        >
+                          {typeInfo.icon}
+                        </span>
+                        <div className="notification-content">
+                          <p className="notification-message">
+                            {notification.message}
+                          </p>
+                          <p className="notification-time">
+                            {new Date(notification.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        {!notification.read && <span className="notification-dot"></span>}
+                      </div>
+                    );
+                  })}
+                </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'reviews' && (
           <div className="list-section">
             <h3>收到的评价</h3>
@@ -296,9 +557,71 @@ function Profile() {
         </button>
       </div>
 
+      {showConfirmModal && selectedQueue && (
+        <div className="modal-overlay" onClick={() => setShowConfirmModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>确认借用</h3>
+              <button className="modal-close" onClick={() => setShowConfirmModal(false)}>
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleConfirmSubmit}>
+              <div className="confirm-queue-info">
+                <p>📦 物品：<strong>{selectedQueue.item.title}</strong></p>
+                <p>押金：¥{selectedQueue.item.deposit}</p>
+              </div>
+              <div className="form-group">
+                <label className="form-label">开始日期</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={confirmForm.startDate}
+                  onChange={(e) => setConfirmForm({ ...confirmForm, startDate: e.target.value })}
+                  min={today}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">归还日期</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={confirmForm.endDate}
+                  onChange={(e) => setConfirmForm({ ...confirmForm, endDate: e.target.value })}
+                  min={confirmForm.startDate || today}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">留言（选填）</label>
+                <textarea
+                  className="form-textarea"
+                  value={confirmForm.message}
+                  onChange={(e) => setConfirmForm({ ...confirmForm, message: e.target.value })}
+                  placeholder="给物主留言..."
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowConfirmModal(false)}
+                >
+                  取消
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? '提交中...' : '确认借用'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .profile-page {
-          max-width: 900px;
+          max-width: 1000px;
           margin: 0 auto;
         }
         .profile-header {
@@ -379,6 +702,7 @@ function Profile() {
           cursor: pointer;
           transition: all 0.2s;
           white-space: nowrap;
+          position: relative;
         }
         .profile-tabs .tab:hover {
           background: #f5f5f5;
@@ -386,6 +710,22 @@ function Profile() {
         .profile-tabs .tab.active {
           background: #667eea;
           color: white;
+        }
+        .tab-badge {
+          position: absolute;
+          top: 2px;
+          right: 6px;
+          background: #ff4d4f;
+          color: white;
+          border-radius: 10px;
+          padding: 1px 7px;
+          font-size: 11px;
+          min-width: 18px;
+          text-align: center;
+        }
+        .tab.active .tab-badge {
+          background: white;
+          color: #ff4d4f;
         }
         .profile-content {
           background: white;
@@ -439,6 +779,15 @@ function Profile() {
         .btn-sm {
           padding: 6px 14px;
           font-size: 13px;
+        }
+        .btn-outline {
+          background: white;
+          border: 1px solid #667eea;
+          color: #667eea;
+        }
+        .btn-outline:hover {
+          background: #667eea;
+          color: white;
         }
         .empty-list {
           text-align: center;
@@ -550,6 +899,149 @@ function Profile() {
           font-size: 12px;
           color: #999;
         }
+        .queue-record-list {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .queue-record-card {
+          display: grid;
+          grid-template-columns: 1fr auto auto;
+          gap: 20px;
+          align-items: center;
+          padding: 16px;
+          border: 1px solid #f0f0f0;
+          border-radius: 8px;
+          transition: all 0.2s;
+        }
+        .queue-record-card:hover {
+          border-color: #667eea;
+        }
+        .queue-item-info {
+          display: flex;
+          gap: 16px;
+          text-decoration: none;
+          color: inherit;
+        }
+        .queue-item-image {
+          width: 80px;
+          height: 80px;
+          border-radius: 8px;
+          overflow: hidden;
+          background: #f5f5f5;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .queue-item-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .queue-item-detail h4 {
+          margin-bottom: 4px;
+          font-size: 16px;
+        }
+        .queue-item-detail p {
+          font-size: 13px;
+          color: #666;
+          margin-bottom: 2px;
+        }
+        .queue-time {
+          color: #999;
+        }
+        .queue-record-status {
+          text-align: center;
+          min-width: 120px;
+        }
+        .queue-status-tag {
+          display: inline-block;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 600;
+          margin-bottom: 6px;
+        }
+        .queue-position-info {
+          display: block;
+          font-size: 13px;
+          color: #1890ff;
+          font-weight: 500;
+        }
+        .queue-expire {
+          display: block;
+          font-size: 12px;
+          color: #fa8c16;
+        }
+        .queue-record-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .notification-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .notification-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+          padding: 16px;
+          background: #fafafa;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s;
+          position: relative;
+        }
+        .notification-item.unread {
+          background: #f0f7ff;
+        }
+        .notification-item:hover {
+          background: #f5f5f5;
+        }
+        .notification-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          flex-shrink: 0;
+        }
+        .notification-content {
+          flex: 1;
+        }
+        .notification-message {
+          font-size: 14px;
+          color: #333;
+          margin-bottom: 4px;
+          line-height: 1.6;
+        }
+        .notification-time {
+          font-size: 12px;
+          color: #999;
+        }
+        .notification-dot {
+          width: 8px;
+          height: 8px;
+          background: #ff4d4f;
+          border-radius: 50%;
+          flex-shrink: 0;
+          margin-top: 6px;
+        }
+        .confirm-queue-info {
+          background: #f6ffed;
+          border: 1px solid #b7eb8f;
+          border-radius: 8px;
+          padding: 12px 16px;
+          margin-bottom: 16px;
+        }
+        .confirm-queue-info p {
+          margin-bottom: 4px;
+        }
         .order-actions {
           text-align: center;
           padding: 40px 0;
@@ -562,6 +1054,9 @@ function Profile() {
           color: #999;
           font-size: 14px;
         }
+        .w-full {
+          width: 100%;
+        }
         @media (max-width: 768px) {
           .profile-header {
             flex-direction: column;
@@ -571,8 +1066,21 @@ function Profile() {
           .profile-avatar {
             flex-direction: column;
           }
+          .profile-stats {
+            gap: 24px;
+          }
           .item-grid {
             grid-template-columns: repeat(2, 1fr);
+          }
+          .queue-record-card {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+          .queue-record-status {
+            text-align: left;
+          }
+          .queue-record-actions {
+            flex-direction: row;
           }
         }
       `}</style>

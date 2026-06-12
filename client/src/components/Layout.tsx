@@ -1,14 +1,60 @@
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/authStore';
+import { queueApi } from '../api';
+import type { QueueNotification } from '../types';
 
 function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<QueueNotification[]>([]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadUnreadCount();
+      const interval = setInterval(loadUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
+
+  const loadUnreadCount = async () => {
+    const res = await queueApi.getUnreadNotificationCount();
+    if (res.success) {
+      setUnreadCount(res.data?.count || 0);
+    }
+  };
+
+  const handleOpenNotifications = async () => {
+    const res = await queueApi.getNotifications();
+    if (res.success) {
+      setNotifications(res.data || []);
+    }
+    setShowNotifications(true);
+  };
+
+  const handleCloseNotifications = () => {
+    setShowNotifications(false);
+  };
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const goToNotification = async (notification: QueueNotification) => {
+    if (!notification.read) {
+      await queueApi.markNotificationAsRead(notification.id);
+      loadUnreadCount();
+    }
+    setShowNotifications(false);
+    if (notification.type === 'queue_turn') {
+      navigate(`/items/${notification.itemId}`);
+    } else {
+      navigate('/profile', { state: { tab: 'notifications' } });
+    }
   };
 
   const navItems = [
@@ -45,6 +91,17 @@ function Layout() {
                 <Link to="/disputes" className="nav-link">
                   纠纷中心
                 </Link>
+                <div className="notification-wrapper">
+                  <button
+                    className="notification-btn"
+                    onClick={handleOpenNotifications}
+                  >
+                    🔔
+                    {unreadCount > 0 && (
+                      <span className="notification-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                    )}
+                  </button>
+                </div>
                 <div className="user-info" onClick={() => navigate('/profile')}>
                   <img src={user?.avatar} alt="" className="avatar" />
                   <span className="user-name">{user?.nickname}</span>
@@ -67,6 +124,64 @@ function Layout() {
           </div>
         </div>
       </header>
+
+      {showNotifications && (
+        <div className="notification-popup-overlay" onClick={handleCloseNotifications}>
+          <div className="notification-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="notification-popup-header">
+              <h3>通知中心</h3>
+              {unreadCount > 0 && (
+                <button
+                  className="btn-link"
+                  onClick={async () => {
+                    await queueApi.markAllNotificationsAsRead();
+                    loadUnreadCount();
+                    setNotifications(notifications.map((n) => ({ ...n, read: true })));
+                  }}
+                >
+                  全部已读
+                </button>
+              )}
+              <button className="popup-close" onClick={handleCloseNotifications}>
+                ×
+              </button>
+            </div>
+            <div className="notification-popup-list">
+              {notifications.length === 0 ? (
+                <div className="notification-empty">暂无通知</div>
+              ) : (
+                notifications.slice(0, 10).map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={`notification-popup-item ${!notification.read ? 'unread' : ''}`}
+                    onClick={() => goToNotification(notification)}
+                  >
+                    <span className="notification-type-icon">
+                      {notification.type === 'queue_turn' ? '🔔' : notification.type === 'queue_expired' ? '⏰' : '📧'}
+                    </span>
+                    <div className="notification-popup-content">
+                      <p className="notification-popup-message">{notification.message}</p>
+                      <p className="notification-popup-time">
+                        {new Date(notification.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    {!notification.read && <span className="unread-dot"></span>}
+                  </div>
+                ))
+              )}
+            </div>
+            {notifications.length > 0 && (
+              <div className="notification-popup-footer" onClick={() => {
+                setShowNotifications(false);
+                navigate('/profile', { state: { tab: 'notifications' } });
+              }}>
+                查看全部通知 →
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <main className="main">
         <Outlet />
       </main>
@@ -131,6 +246,145 @@ function Layout() {
           align-items: center;
           gap: 12px;
         }
+        .notification-wrapper {
+          position: relative;
+        }
+        .notification-btn {
+          background: none;
+          border: none;
+          font-size: 20px;
+          cursor: pointer;
+          padding: 8px;
+          border-radius: 8px;
+          transition: all 0.2s;
+          position: relative;
+        }
+        .notification-btn:hover {
+          background: #f0f2ff;
+        }
+        .notification-badge {
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          background: #ff4d4f;
+          color: white;
+          border-radius: 10px;
+          padding: 1px 6px;
+          font-size: 11px;
+          min-width: 16px;
+          text-align: center;
+          line-height: 1.2;
+        }
+        .notification-popup-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 999;
+        }
+        .notification-popup {
+          position: fixed;
+          top: 60px;
+          right: calc((100% - 1200px) / 2 + 20px);
+          width: 400px;
+          max-height: 500px;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+          z-index: 1000;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+        .notification-popup-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 20px;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        .notification-popup-header h3 {
+          font-size: 16px;
+          margin: 0;
+        }
+        .btn-link {
+          background: none;
+          border: none;
+          color: #667eea;
+          cursor: pointer;
+          font-size: 13px;
+        }
+        .popup-close {
+          background: none;
+          border: none;
+          font-size: 20px;
+          color: #999;
+          cursor: pointer;
+        }
+        .notification-popup-list {
+          flex: 1;
+          overflow-y: auto;
+          max-height: 380px;
+        }
+        .notification-empty {
+          text-align: center;
+          padding: 60px 20px;
+          color: #999;
+        }
+        .notification-popup-item {
+          display: flex;
+          gap: 12px;
+          padding: 14px 20px;
+          border-bottom: 1px solid #f5f5f5;
+          cursor: pointer;
+          transition: background 0.2s;
+          position: relative;
+        }
+        .notification-popup-item:hover {
+          background: #fafafa;
+        }
+        .notification-popup-item.unread {
+          background: #f0f7ff;
+        }
+        .notification-type-icon {
+          font-size: 20px;
+          flex-shrink: 0;
+        }
+        .notification-popup-content {
+          flex: 1;
+        }
+        .notification-popup-message {
+          font-size: 14px;
+          color: #333;
+          line-height: 1.5;
+          margin-bottom: 4px;
+        }
+        .notification-popup-time {
+          font-size: 12px;
+          color: #999;
+        }
+        .unread-dot {
+          width: 8px;
+          height: 8px;
+          background: #ff4d4f;
+          border-radius: 50%;
+          flex-shrink: 0;
+          align-self: flex-start;
+          margin-top: 6px;
+        }
+        .notification-popup-footer {
+          padding: 12px 20px;
+          text-align: center;
+          color: #667eea;
+          cursor: pointer;
+          border-top: 1px solid #f0f0f0;
+          font-size: 14px;
+          transition: background 0.2s;
+        }
+        .notification-popup-footer:hover {
+          background: #fafafa;
+        }
         .user-info {
           display: flex;
           align-items: center;
@@ -170,12 +424,22 @@ function Layout() {
           font-size: 14px;
           margin-top: 40px;
         }
+        @media (max-width: 1200px) {
+          .notification-popup {
+            right: 20px;
+          }
+        }
         @media (max-width: 768px) {
           .nav {
             display: none;
           }
           .user-name {
             display: none;
+          }
+          .notification-popup {
+            width: calc(100% - 40px);
+            right: 20px;
+            left: 20px;
           }
         }
       `}</style>

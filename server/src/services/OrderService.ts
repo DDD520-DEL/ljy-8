@@ -11,6 +11,7 @@ import {
 } from '../types';
 import { timeCoinService } from './TimeCoinService';
 import { getCurrentTime } from '../utils/helpers';
+import { queueService } from './QueueService';
 
 export class OrderService {
   // Borrow Orders
@@ -107,6 +108,8 @@ export class OrderService {
     orderRepository.addBorrowTimelineEvent(orderId, '物品已归还', lenderId);
     
     itemRepository.update(order.itemId, { status: 'available' });
+
+    queueService.notifyNextInQueue(order.itemId);
     
     const updated = orderRepository.findBorrowOrderById(orderId);
     return updated ? orderRepository.toBorrowOrderWithDetails(updated) : null;

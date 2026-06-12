@@ -171,3 +171,35 @@ export interface ApiResponse<T = any> {
   data?: T;
   message?: string;
 }
+
+export type QueueStatus = 'waiting' | 'notified' | 'confirmed' | 'expired' | 'cancelled' | 'borrowed';
+
+export interface QueueEntry {
+  id: string;
+  itemId: string;
+  userId: string;
+  position: number;
+  status: QueueStatus;
+  notifiedAt?: string;
+  confirmedAt?: string;
+  expiredAt?: string;
+  cancelledAt?: string;
+  message?: string;
+  createdAt: string;
+}
+
+export interface QueueEntryWithDetails extends QueueEntry {
+  item: ItemWithOwner;
+  user: PublicUser;
+}
+
+export interface QueueNotification {
+  id: string;
+  userId: string;
+  queueEntryId: string;
+  itemId: string;
+  type: 'queue_turn' | 'queue_expired' | 'queue_cancelled';
+  message: string;
+  read: boolean;
+  createdAt: string;
+}

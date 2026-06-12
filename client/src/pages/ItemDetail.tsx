@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { itemApi, orderApi, reviewApi } from '../api';
+import { itemApi, orderApi, reviewApi, queueApi } from '../api';
 import { useAuthStore } from '../store/authStore';
-import type { ItemWithOwner, ReviewWithUser } from '../types';
+import type { ItemWithOwner, ReviewWithUser, QueueEntryWithDetails } from '../types';
 
 function ItemDetail() {
   const { id } = useParams<{ id: string }>();
@@ -12,18 +12,34 @@ function ItemDetail() {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBorrowModal, setShowBorrowModal] = useState(false);
+  const [showQueueModal, setShowQueueModal] = useState(false);
+  const [showConfirmQueueModal, setShowConfirmQueueModal] = useState(false);
   const [borrowForm, setBorrowForm] = useState({
     startDate: '',
     endDate: '',
     message: '',
   });
+  const [queueMessage, setQueueMessage] = useState('');
+  const [confirmQueueForm, setConfirmQueueForm] = useState({
+    startDate: '',
+    endDate: '',
+    message: '',
+  });
   const [submitting, setSubmitting] = useState(false);
+  const [queueList, setQueueList] = useState<QueueEntryWithDetails[]>([]);
+  const [myQueueEntry, setMyQueueEntry] = useState<QueueEntryWithDetails | null>(null);
 
   useEffect(() => {
     if (id) {
       loadItem();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (id && isAuthenticated) {
+      loadQueueInfo();
+    }
+  }, [id, isAuthenticated]);
 
   const loadItem = async () => {
     setLoading(true);
@@ -39,6 +55,16 @@ function ItemDetail() {
     const res = await reviewApi.getReviewsByUser(userId);
     if (res.success) {
       setReviews(res.data || []);
+    }
+  };
+
+  const loadQueueInfo = async () => {
+    const res = await queueApi.getItemQueues(id!);
+    if (res.success) {
+      const queues = res.data || [];
+      setQueueList(queues);
+      const mine = queues.find((q: QueueEntryWithDetails) => q.userId === user?.id);
+      setMyQueueEntry(mine || null);
     }
   };
 
@@ -68,7 +94,73 @@ function ItemDetail() {
     }
   };
 
+  const handleJoinQueue = async () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    setShowQueueModal(true);
+  };
+
+  const handleQueueSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const res = await queueApi.joinQueue({
+        itemId: id!,
+        message: queueMessage,
+      });
+      if (res.success) {
+        alert(`排队成功！您当前是第 ${res.data.position} 位`);
+        setShowQueueModal(false);
+        setQueueMessage('');
+        loadQueueInfo();
+      } else {
+        alert(res.message || '排队失败');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCancelQueue = async () => {
+    if (!myQueueEntry) return;
+    if (!confirm('确定要取消排队吗？')) return;
+    const res = await queueApi.cancelQueue(myQueueEntry.id);
+    if (res.success) {
+      alert('已取消排队');
+      loadQueueInfo();
+    } else {
+      alert(res.message || '取消失败');
+    }
+  };
+
+  const handleConfirmQueueSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!myQueueEntry) return;
+    setSubmitting(true);
+    try {
+      const res = await queueApi.confirmQueueBorrow(myQueueEntry.id, {
+        startDate: confirmQueueForm.startDate,
+        endDate: confirmQueueForm.endDate,
+        message: confirmQueueForm.message,
+      });
+      if (res.success) {
+        alert('确认成功！借用申请已提交');
+        setShowConfirmQueueModal(false);
+        navigate('/orders');
+      } else {
+        alert(res.message || '确认失败');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const isOwner = user?.id === item?.ownerId;
+  const isMyTurn = myQueueEntry?.status === 'notified';
+  const today = new Date().toISOString().split('T')[0];
+  const maxDate = new Date(Date.now() + (item?.maxBorrowDays || 30) * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
   if (loading) {
     return <div className="container">加载中...</div>;
@@ -77,6 +169,18 @@ function ItemDetail() {
   if (!item) {
     return <div className="container">物品不存在</div>;
   }
+
+  const statusText = (status: string) => {
+    const map: Record<string, string> = {
+      waiting: '排队中',
+      notified: '待确认',
+      confirmed: '已确认',
+      expired: '已超时',
+      cancelled: '已取消',
+      borrowed: '已借用',
+    };
+    return map[status] || status;
+  };
 
   return (
     <div className="container item-detail-page">
@@ -100,6 +204,9 @@ function ItemDetail() {
               {item.status === 'available' ? '可借用' : '借出中'}
             </span>
             <span className="view-count">👁 {item.viewCount} 次浏览</span>
+            {queueList.length > 0 && (
+              <span className="queue-count">👥 {queueList.length} 人排队</span>
+            )}
           </div>
 
           <div className="item-price-section">
@@ -141,14 +248,90 @@ function ItemDetail() {
             </div>
           </div>
 
+          {myQueueEntry && !isOwner && (
+            <div className={`my-queue-card my-queue-${myQueueEntry.status}`}>
+              <div className="my-queue-header">
+                <span className="my-queue-title">📍 我的排队状态</span>
+                <span className={`tag tag-${myQueueEntry.status === 'waiting' ? 'blue' : myQueueEntry.status === 'notified' ? 'orange' : 'gray'}`}>
+                  {statusText(myQueueEntry.status)}
+                </span>
+              </div>
+              {myQueueEntry.status === 'waiting' && (
+                <p className="my-queue-position">当前排位：第 {myQueueEntry.position} 位</p>
+              )}
+              {myQueueEntry.status === 'notified' && myQueueEntry.expiredAt && (
+                <div className="notified-info">
+                  <p className="urgent-text">🔥 已轮到您借用！</p>
+                  <p className="expire-hint">请在 {new Date(myQueueEntry.expiredAt).toLocaleString()} 前确认</p>
+                  <CountdownTimer expiredAt={myQueueEntry.expiredAt} />
+                </div>
+              )}
+              <div className="my-queue-actions">
+                {myQueueEntry.status === 'waiting' && (
+                  <button className="btn btn-secondary" onClick={handleCancelQueue}>
+                    取消排队
+                  </button>
+                )}
+                {myQueueEntry.status === 'notified' && (
+                  <>
+                    <button className="btn btn-secondary" onClick={handleCancelQueue}>
+                      放弃
+                    </button>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => setShowConfirmQueueModal(true)}
+                    >
+                      确认借用
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {!isOwner && (
-            <button
-              className="btn btn-primary btn-lg w-full"
-              onClick={() => setShowBorrowModal(true)}
-              disabled={item.status !== 'available'}
-            >
-              {item.status === 'available' ? '申请借用' : '暂不可借用'}
-            </button>
+            <>
+              {item.status === 'available' && (
+                <button
+                  className="btn btn-primary btn-lg w-full"
+                  onClick={() => setShowBorrowModal(true)}
+                >
+                  申请借用
+                </button>
+              )}
+              {item.status === 'borrowed' && !myQueueEntry && (
+                <>
+                  <button
+                    className="btn btn-primary btn-lg w-full"
+                    disabled={true}
+                  >
+                    暂不可借用
+                  </button>
+                  <button
+                    className="btn btn-outline btn-lg w-full mt-2"
+                    onClick={handleJoinQueue}
+                  >
+                    ⏳ 加入等待队列
+                  </button>
+                </>
+              )}
+              {myQueueEntry && isMyTurn && (
+                <button
+                  className="btn btn-primary btn-lg w-full"
+                  onClick={() => setShowConfirmQueueModal(true)}
+                >
+                  立即确认借用
+                </button>
+              )}
+              {myQueueEntry && !isMyTurn && (
+                <button
+                  className="btn btn-primary btn-lg w-full"
+                  disabled={true}
+                >
+                  排队中 (第{myQueueEntry.position}位)
+                </button>
+              )}
+            </>
           )}
 
           {isOwner && (
@@ -158,6 +341,33 @@ function ItemDetail() {
           )}
         </div>
       </div>
+
+      {queueList.length > 0 && (
+        <div className="queue-section">
+          <h2>当前排队（{queueList.length}人）</h2>
+          <div className="queue-list">
+            {queueList.slice(0, 5).map((entry, index) => (
+              <div key={entry.id} className="queue-item">
+                <span className="queue-position">#{index + 1}</span>
+                <img src={entry.user.avatar} alt="" className="avatar" />
+                <div className="queue-user-info">
+                  <span className="queue-user-name">{entry.user.nickname}</span>
+                  <span className="queue-user-neighborhood">{entry.user.neighborhood}</span>
+                </div>
+                <span className={`tag tag-${entry.status === 'waiting' ? 'blue' : entry.status === 'notified' ? 'orange' : 'gray'}`}>
+                  {statusText(entry.status)}
+                </span>
+                <span className="queue-date">
+                  {new Date(entry.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            ))}
+            {queueList.length > 5 && (
+              <p className="more-queue">...还有 {queueList.length - 5} 人排队</p>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="reviews-section">
         <h2>用户评价（{reviews.length}）</h2>
@@ -203,6 +413,7 @@ function ItemDetail() {
                   className="form-input"
                   value={borrowForm.startDate}
                   onChange={(e) => setBorrowForm({ ...borrowForm, startDate: e.target.value })}
+                  min={today}
                   required
                 />
               </div>
@@ -213,6 +424,8 @@ function ItemDetail() {
                   className="form-input"
                   value={borrowForm.endDate}
                   onChange={(e) => setBorrowForm({ ...borrowForm, endDate: e.target.value })}
+                  min={borrowForm.startDate || today}
+                  max={maxDate}
                   required
                 />
               </div>
@@ -235,6 +448,110 @@ function ItemDetail() {
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
                   {submitting ? '提交中...' : '提交申请'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showQueueModal && (
+        <div className="modal-overlay" onClick={() => setShowQueueModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>登记排队</h3>
+              <button className="modal-close" onClick={() => setShowQueueModal(false)}>
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleQueueSubmit}>
+              <div className="queue-info-box">
+                <p>📦 物品：<strong>{item.title}</strong></p>
+                <p>👥 当前已有 <strong>{queueList.length}</strong> 人排队</p>
+                <p>📍 您将排在第 <strong>{queueList.length + 1}</strong> 位</p>
+                <p className="text-muted small">物品归还后，系统将按排队顺序依次通知。请在收到通知后24小时内确认借用，超时将自动顺延。</p>
+              </div>
+              <div className="form-group">
+                <label className="form-label">留言（选填）</label>
+                <textarea
+                  className="form-textarea"
+                  value={queueMessage}
+                  onChange={(e) => setQueueMessage(e.target.value)}
+                  placeholder="给物主留言..."
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowQueueModal(false)}
+                >
+                  取消
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? '提交中...' : '确认排队'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showConfirmQueueModal && (
+        <div className="modal-overlay" onClick={() => setShowConfirmQueueModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>确认借用</h3>
+              <button className="modal-close" onClick={() => setShowConfirmQueueModal(false)}>
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleConfirmQueueSubmit}>
+              <div className="confirm-warning">
+              ⚠️ 您已排到，请尽快确认借用信息，超时名额将顺延
+              </div>
+              <div className="form-group">
+                <label className="form-label">开始日期</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={confirmQueueForm.startDate}
+                  onChange={(e) => setConfirmQueueForm({ ...confirmQueueForm, startDate: e.target.value })}
+                  min={today}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">归还日期</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={confirmQueueForm.endDate}
+                  onChange={(e) => setConfirmQueueForm({ ...confirmQueueForm, endDate: e.target.value })}
+                  min={confirmQueueForm.startDate || today}
+                  max={maxDate}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">留言（选填）</label>
+                <textarea
+                  className="form-textarea"
+                  value={confirmQueueForm.message}
+                  onChange={(e) => setConfirmQueueForm({ ...confirmQueueForm, message: e.target.value })}
+                  placeholder="给物主留言..."
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowConfirmQueueModal(false)}
+                >
+                  取消
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? '提交中...' : '确认借用'}
                 </button>
               </div>
             </form>
@@ -286,10 +603,18 @@ function ItemDetail() {
           align-items: center;
           gap: 12px;
           margin-bottom: 20px;
+          flex-wrap: wrap;
         }
         .view-count {
           color: #999;
           font-size: 14px;
+        }
+        .queue-count {
+          color: #667eea;
+          font-size: 14px;
+          background: #f0f2ff;
+          padding: 2px 10px;
+          border-radius: 12px;
         }
         .item-price-section {
           background: #fff7e6;
@@ -356,6 +681,158 @@ function ItemDetail() {
         .btn-lg {
           padding: 14px 24px;
           font-size: 16px;
+        }
+        .btn-outline {
+          background: white;
+          border: 2px solid #667eea;
+          color: #667eea;
+        }
+        .btn-outline:hover {
+          background: #667eea;
+          color: white;
+        }
+        .mt-2 {
+          margin-top: 12px;
+        }
+        .my-queue-card {
+          padding: 16px;
+          border-radius: 12px;
+          margin-bottom: 20px;
+          border: 2px solid;
+        }
+        .my-queue-waiting {
+          background: #f0f7ff;
+          border-color: #1890ff;
+        }
+        .my-queue-notified {
+          background: #fff7e6;
+          border-color: #fa8c16;
+          animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(250, 140, 22, 0.4); }
+          50% { box-shadow: 0 0 0 10px rgba(250, 140, 22, 0); }
+        }
+        .my-queue-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+        .my-queue-title {
+          font-weight: 600;
+          font-size: 15px;
+        }
+        .my-queue-position {
+          font-size: 14px;
+          color: #1890ff;
+          margin: 8px 0;
+        }
+        .notified-info {
+          margin: 8px 0;
+        }
+        .urgent-text {
+          color: #fa8c16;
+          font-weight: 600;
+          margin-bottom: 4px;
+        }
+        .expire-hint {
+          font-size: 13px;
+          color: #666;
+          margin-bottom: 8px;
+        }
+        .countdown-timer {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+        .countdown-item {
+          background: white;
+          padding: 4px 12px;
+          border-radius: 6px;
+          font-weight: 600;
+          color: #fa8c16;
+          font-size: 14px;
+        }
+        .my-queue-actions {
+          display: flex;
+          gap: 12px;
+          justify-content: flex-end;
+        }
+        .queue-section {
+          background: white;
+          border-radius: 12px;
+          padding: 24px;
+          margin-bottom: 24px;
+        }
+        .queue-section h2 {
+          font-size: 20px;
+          margin-bottom: 16px;
+        }
+        .queue-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .queue-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 16px;
+          background: #fafafa;
+          border-radius: 8px;
+        }
+        .queue-position {
+          font-weight: 700;
+          color: #667eea;
+          width: 40px;
+          font-size: 16px;
+        }
+        .queue-user-info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+        .queue-user-name {
+          font-weight: 500;
+        }
+        .queue-user-neighborhood {
+          font-size: 12px;
+          color: #999;
+        }
+        .queue-date {
+          font-size: 12px;
+          color: #999;
+        }
+        .more-queue {
+          text-align: center;
+          color: #999;
+          font-size: 14px;
+          padding-top: 8px;
+        }
+        .queue-info-box {
+          background: #f6ffed;
+          border: 1px solid #b7eb8f;
+          border-radius: 8px;
+          padding: 16px;
+          margin-bottom: 16px;
+        }
+        .queue-info-box p {
+          margin-bottom: 8px;
+        }
+        .queue-info-box p:last-child {
+          margin-bottom: 0;
+        }
+        .confirm-warning {
+          background: #fff2e8;
+          color: #fa541c;
+          padding: 12px 16px;
+          border-radius: 8px;
+          margin-bottom: 16px;
+          font-weight: 500;
+        }
+        .small {
+          font-size: 12px;
         }
         .reviews-section {
           background: white;
@@ -449,6 +926,12 @@ function ItemDetail() {
           gap: 12px;
           margin-top: 24px;
         }
+        .w-full {
+          width: 100%;
+        }
+        .text-muted {
+          color: #999;
+        }
         @media (max-width: 768px) {
           .item-detail {
             grid-template-columns: 1fr;
@@ -458,6 +941,35 @@ function ItemDetail() {
           }
         }
       `}</style>
+    </div>
+  );
+}
+
+function CountdownTimer({ expiredAt }: { expiredAt: string }) {
+  const [timeLeft, setTimeLeft] = useState(getTimeLeft());
+
+  function getTimeLeft() {
+    const diff = new Date(expiredAt).getTime() - Date.now();
+    if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0 };
+    return {
+      hours: Math.floor(diff / (1000 * 60 * 60)),
+      minutes: Math.floor((diff / (1000 * 60)) % 60),
+      seconds: Math.floor((diff / 1000) % 60),
+    };
+  }
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(getTimeLeft());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [expiredAt]);
+
+  return (
+    <div className="countdown-timer">
+      <span className="countdown-item">{timeLeft.hours.toString().padStart(2, '0')} 时</span>
+      <span className="countdown-item">{timeLeft.minutes.toString().padStart(2, '0')} 分</span>
+      <span className="countdown-item">{timeLeft.seconds.toString().padStart(2, '0')} 秒</span>
     </div>
   );
 }

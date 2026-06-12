@@ -117,4 +117,22 @@ export const disputeApi = {
     request(`/disputes/${id}/resolve`, { method: 'PUT', data }),
 };
 
+export const queueApi = {
+  joinQueue: (data: { itemId: string; message?: string }) =>
+    request('/queue', { method: 'POST', data }),
+  cancelQueue: (id: string) =>
+    request(`/queue/${id}`, { method: 'DELETE' }),
+  getMyQueues: () => request('/queue/my'),
+  getItemQueues: (itemId: string) => request(`/queue/item/${itemId}`),
+  getQueueById: (id: string) => request(`/queue/${id}`),
+  confirmQueueBorrow: (id: string, data: { startDate: string; endDate: string; message?: string }) =>
+    request(`/queue/${id}/confirm`, { method: 'PUT', data }),
+  getNotifications: () => request('/queue/notifications/list'),
+  getUnreadNotificationCount: () => request('/queue/notifications/unread-count'),
+  markNotificationAsRead: (id: string) =>
+    request(`/queue/notifications/${id}/read`, { method: 'PUT' }),
+  markAllNotificationsAsRead: () =>
+    request('/queue/notifications/read-all', { method: 'PUT' }),
+};
+
 export default api;

@@ -7,8 +7,10 @@ import skillRoutes from './routes/skills';
 import orderRoutes from './routes/orders';
 import reviewRoutes from './routes/reviews';
 import disputeRoutes from './routes/disputes';
+import queueRoutes from './routes/queue';
 import { db } from './utils/db';
 import { initializeSampleData } from './utils/initData';
+import { queueService } from './services/QueueService';
 
 dotenv.config();
 
@@ -27,10 +29,19 @@ app.use('/api/skills', skillRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/disputes', disputeRoutes);
+app.use('/api/queue', queueRoutes);
 
 app.get('/api/health', (_req: express.Request, res: express.Response) => {
   res.json({ success: true, message: '邻里共享平台服务运行中' });
 });
+
+setInterval(() => {
+  try {
+    queueService.checkAndExpireNotifiedEntries();
+  } catch (err) {
+    console.error('检查超时排队记录出错:', err);
+  }
+}, 60 * 1000);
 
 app.listen(PORT, () => {
   console.log(`🚀 服务器运行在 http://localhost:${PORT}`);
