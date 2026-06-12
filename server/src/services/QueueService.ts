@@ -164,6 +164,13 @@ export class QueueService {
     orderRepository.updateBorrowOrder(newOrder.id, { status: 'approved' as BorrowOrderStatus });
     orderRepository.addBorrowTimelineEvent(newOrder.id, '通过排队确认借用，已自动通过审批', userId);
 
+    orderRepository.updateBorrowOrder(newOrder.id, { status: 'borrowing' as BorrowOrderStatus });
+    orderRepository.addBorrowTimelineEvent(newOrder.id, '物品已交付借出（排队自动确认）', userId);
+
+    itemRepository.update(entry.itemId, { status: 'borrowed' });
+
+    this.markQueueAsBorrowed(queueId);
+
     const updated = queueRepository.findById(queueId);
     return updated ? queueRepository.toQueueEntryWithDetails(updated) : null;
   }
