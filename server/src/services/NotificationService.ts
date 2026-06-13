@@ -94,10 +94,26 @@ export class NotificationService {
   ): Notification {
     const title = '收到新评价';
     const stars = '⭐'.repeat(Math.round(rating));
-    const message = `${reviewerName} 对您的服务「${orderTitle}」给出了 ${rating} 星评价 ${stars}`;
+    const message = `${reviewerName} 对您的订单「${orderTitle}」给出了 ${rating} 星评价 ${stars}`;
     return this.sendNotification({
       userId,
       type: 'new_review',
+      title,
+      message,
+      relatedType: 'service_order',
+    });
+  }
+
+  public sendReviewReplyNotification(
+    userId: string,
+    replierName: string,
+    orderTitle: string
+  ): Notification {
+    const title = '收到评价回复';
+    const message = `${replierName} 对订单「${orderTitle}」的评价进行了回复`;
+    return this.sendNotification({
+      userId,
+      type: 'review_reply',
       title,
       message,
       relatedType: 'service_order',

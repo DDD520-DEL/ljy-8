@@ -153,6 +153,18 @@ export interface ServiceOrderWithDetails extends ServiceOrder {
   provider: PublicUser;
 }
 
+export interface ReviewReply {
+  id: string;
+  reviewId: string;
+  replierId: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface ReviewReplyWithUser extends ReviewReply {
+  replier: PublicUser;
+}
+
 export interface Review {
   id: string;
   orderId: string;
@@ -167,6 +179,7 @@ export interface Review {
 export interface ReviewWithUser extends Review {
   reviewer: PublicUser;
   reviewee: PublicUser;
+  replies: ReviewReplyWithUser[];
 }
 
 export type DisputeStatus = 'pending' | 'negotiating' | 'reviewing' | 'resolved';

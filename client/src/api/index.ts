@@ -109,9 +109,13 @@ export const orderApi = {
 
 export const reviewApi = {
   getReviewsByUser: (userId: string) => request(`/reviews/user/${userId}`),
+  getMyPostedReviews: () => request('/reviews/my-posted'),
   getReviewsByOrder: (orderId: string, orderType: string) =>
     request('/reviews/order', { params: { orderId, orderType } }),
+  getReviewReplies: (reviewId: string) => request(`/reviews/${reviewId}/replies`),
   createReview: (data: any) => request('/reviews', { method: 'POST', data }),
+  createReviewReply: (reviewId: string, content: string) =>
+    request(`/reviews/${reviewId}/replies`, { method: 'POST', data: { content } }),
 };
 
 export const disputeApi = {

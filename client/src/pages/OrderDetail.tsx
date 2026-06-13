@@ -20,12 +20,16 @@ function OrderDetail({ type }: OrderDetailProps) {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showReplyModal, setShowReplyModal] = useState(false);
   const [showDisputeModal, setShowDisputeModal] = useState(false);
   const [showDamageModal, setShowDamageModal] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<ReviewWithUser | null>(null);
   const [reviewForm, setReviewForm] = useState({ rating: 5, content: '' });
+  const [replyForm, setReplyForm] = useState({ content: '' });
   const [disputeForm, setDisputeForm] = useState({ reason: '', description: '' });
   const [damageForm, setDamageForm] = useState({ description: '', photos: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [replying, setReplying] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -166,22 +170,24 @@ function OrderDetail({ type }: OrderDetailProps) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const revieweeId = type === 'borrow'
-        ? (order as BorrowOrderWithDetails).lenderId
-        : (order as ServiceOrderWithDetails).providerId;
+      const otherPartyId = type === 'borrow'
+        ? user?.id === (order as BorrowOrderWithDetails).lenderId
+          ? (order as BorrowOrderWithDetails).borrowerId
+          : (order as BorrowOrderWithDetails).lenderId
+        : user?.id === (order as ServiceOrderWithDetails).providerId
+          ? (order as ServiceOrderWithDetails).clientId
+          : (order as ServiceOrderWithDetails).providerId;
+
       const res = await reviewApi.createReview({
         orderId: id,
         orderType: type,
-        revieweeId: user?.id === revieweeId
-          ? type === 'borrow'
-            ? (order as BorrowOrderWithDetails).borrowerId
-            : (order as ServiceOrderWithDetails).clientId
-          : revieweeId,
+        revieweeId: otherPartyId,
         ...reviewForm,
       });
       if (res.success) {
         alert('评价成功！');
         setShowReviewModal(false);
+        setReviewForm({ rating: 5, content: '' });
         loadReviews();
       } else {
         alert(res.message || '评价失败');
@@ -189,6 +195,32 @@ function OrderDetail({ type }: OrderDetailProps) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleReplySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedReview) return;
+    setReplying(true);
+    try {
+      const res = await reviewApi.createReviewReply(selectedReview.id, replyForm.content);
+      if (res.success) {
+        alert('回复成功！');
+        setShowReplyModal(false);
+        setSelectedReview(null);
+        setReplyForm({ content: '' });
+        loadReviews();
+      } else {
+        alert(res.message || '回复失败');
+      }
+    } finally {
+      setReplying(false);
+    }
+  };
+
+  const handleOpenReply = (review: ReviewWithUser) => {
+    setSelectedReview(review);
+    setReplyForm({ content: '' });
+    setShowReplyModal(true);
   };
 
   const handleDisputeSubmit = async (e: React.FormEvent) => {
@@ -261,10 +293,25 @@ function OrderDetail({ type }: OrderDetailProps) {
     (type === 'borrow' && order?.status === 'returned') ||
     (type === 'service' && order?.status === 'completed');
 
+  const hasReviewed = reviews.some(r => r.reviewerId === user?.id);
+
   const canDispute =
     order?.status === 'borrowing' ||
     order?.status === 'in_progress' ||
     order?.status === 'approved';
+
+  const getOtherPartyName = () => {
+    if (!order) return '对方';
+    if (type === 'borrow') {
+      return user?.id === (order as BorrowOrderWithDetails).lenderId
+        ? (order as BorrowOrderWithDetails).borrower.nickname
+        : (order as BorrowOrderWithDetails).lender.nickname;
+    } else {
+      return user?.id === (order as ServiceOrderWithDetails).providerId
+        ? (order as ServiceOrderWithDetails).client.nickname
+        : (order as ServiceOrderWithDetails).provider.nickname;
+    }
+  };
 
   if (loading) {
     return <div className="container">加载中...</div>;
@@ -439,6 +486,92 @@ function OrderDetail({ type }: OrderDetailProps) {
               ))}
             </div>
           </div>
+
+          <div className="reviews-section-card">
+            <div className="section-header">
+              <h3>订单评价</h3>
+              {canReview && !hasReviewed && (
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowReviewModal(true)}
+                >
+                  评价 {getOtherPartyName()}
+                </button>
+              )}
+            </div>
+            {reviews.length === 0 ? (
+              <div className="empty-list">
+                <p>暂无评价</p>
+                {canReview && !hasReviewed && (
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => setShowReviewModal(true)}
+                  >
+                    去评价
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="review-list">
+                {reviews.map((review) => {
+                  const canReply = review.revieweeId === user?.id || review.reviewerId === user?.id;
+                  return (
+                    <div key={review.id} className="review-item">
+                      <img src={review.reviewer.avatar} alt="" className="avatar" />
+                      <div className="review-content">
+                        <div className="review-header">
+                          <div>
+                            <span className="reviewer-name">{review.reviewer.nickname}</span>
+                            {review.reviewerId === user?.id && (
+                              <span className="review-tag tag tag-blue">我</span>
+                            )}
+                            <span className="review-rating">
+                              {'⭐'.repeat(review.rating)}
+                            </span>
+                          </div>
+                          {canReply && (
+                            <button
+                              className="btn btn-link btn-sm"
+                              onClick={() => handleOpenReply(review)}
+                            >
+                              回复
+                            </button>
+                          )}
+                        </div>
+                        <p className="review-text">{review.content}</p>
+                        <span className="review-date">
+                          {new Date(review.createdAt).toLocaleString()}
+                        </span>
+                        {review.replies && review.replies.length > 0 && (
+                          <div className="review-replies">
+                            {review.replies.map((reply) => (
+                              <div key={reply.id} className="review-reply-item">
+                                <img src={reply.replier.avatar} alt="" className="avatar avatar-sm" />
+                                <div className="review-reply-content">
+                                  <div className="review-reply-header">
+                                    <span className="replier-name">
+                                      {reply.replier.nickname}
+                                      {reply.replierId === user?.id && (
+                                        <span className="review-tag tag tag-blue">我</span>
+                                      )}
+                                    </span>
+                                    <span className="reply-date">
+                                      {new Date(reply.createdAt).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <p className="reply-text">{reply.content}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="order-sidebar">
@@ -558,12 +691,12 @@ function OrderDetail({ type }: OrderDetailProps) {
               </button>
             )}
 
-            {canReview && (
+            {canReview && !hasReviewed && (
               <button
                 className="btn btn-primary w-full"
                 onClick={() => setShowReviewModal(true)}
               >
-                发表评价
+                评价 {getOtherPartyName()}
               </button>
             )}
 
@@ -583,7 +716,7 @@ function OrderDetail({ type }: OrderDetailProps) {
         <div className="modal-overlay" onClick={() => setShowReviewModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>发表评价</h3>
+              <h3>评价 {getOtherPartyName()}</h3>
               <button className="modal-close" onClick={() => setShowReviewModal(false)}>
                 ×
               </button>
@@ -623,6 +756,52 @@ function OrderDetail({ type }: OrderDetailProps) {
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
                   {submitting ? '提交中...' : '提交评价'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showReplyModal && selectedReview && (
+        <div className="modal-overlay" onClick={() => setShowReplyModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>回复评价</h3>
+              <button className="modal-close" onClick={() => setShowReplyModal(false)}>
+                ×
+              </button>
+            </div>
+            <div className="reply-review-preview">
+              <div className="review-header">
+                <span className="reviewer-name">{selectedReview.reviewer.nickname}</span>
+                <span className="review-rating">
+                  {'⭐'.repeat(selectedReview.rating)}
+                </span>
+              </div>
+              <p className="review-text">{selectedReview.content}</p>
+            </div>
+            <form onSubmit={handleReplySubmit}>
+              <div className="form-group">
+                <label className="form-label">回复内容</label>
+                <textarea
+                  className="form-textarea"
+                  value={replyForm.content}
+                  onChange={(e) => setReplyForm({ content: e.target.value })}
+                  placeholder="请输入您的回复..."
+                  required
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowReplyModal(false)}
+                >
+                  取消
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={replying}>
+                  {replying ? '提交中...' : '提交回复'}
                 </button>
               </div>
             </form>
@@ -780,6 +959,7 @@ function OrderDetail({ type }: OrderDetailProps) {
         .order-item-card,
         .order-info-card,
         .timeline-card,
+        .reviews-section-card,
         .user-card,
         .actions-card {
           background: white;
@@ -831,7 +1011,8 @@ function OrderDetail({ type }: OrderDetailProps) {
         }
         .order-info-card h3,
         .timeline-card h3,
-        .user-card h3 {
+        .user-card h3,
+        .reviews-section-card h3 {
           font-size: 18px;
           margin-bottom: 16px;
         }
@@ -996,6 +1177,131 @@ function OrderDetail({ type }: OrderDetailProps) {
         }
         .no-underline {
           text-decoration: none;
+        }
+        .btn-sm {
+          padding: 6px 14px;
+          font-size: 13px;
+        }
+        .btn-link {
+          background: none;
+          border: none;
+          color: #667eea;
+          cursor: pointer;
+          padding: 4px 8px;
+        }
+        .btn-link:hover {
+          text-decoration: underline;
+        }
+        .empty-list {
+          text-align: center;
+          padding: 40px 0;
+          color: #999;
+        }
+        .empty-list p {
+          margin-bottom: 16px;
+        }
+        .section-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+        }
+        .review-list {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .review-item {
+          display: flex;
+          gap: 12px;
+          padding: 16px;
+          background: #fafafa;
+          border-radius: 8px;
+        }
+        .review-content {
+          flex: 1;
+          min-width: 0;
+        }
+        .review-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+        .reviewer-name {
+          font-weight: 500;
+          margin-right: 8px;
+        }
+        .review-tag {
+          display: inline-block;
+          padding: 1px 8px;
+          border-radius: 10px;
+          font-size: 11px;
+          font-weight: 500;
+          margin-right: 8px;
+        }
+        .tag-blue {
+          background: #e6f7ff;
+          color: #1890ff;
+        }
+        .review-rating {
+          font-size: 14px;
+        }
+        .review-text {
+          color: #666;
+          margin-bottom: 8px;
+          line-height: 1.6;
+        }
+        .review-date {
+          font-size: 12px;
+          color: #999;
+        }
+        .review-replies {
+          margin-top: 12px;
+          padding-left: 12px;
+          border-left: 2px solid #e8e8e8;
+        }
+        .review-reply-item {
+          display: flex;
+          gap: 8px;
+          padding: 10px 0;
+        }
+        .avatar-sm {
+          width: 28px;
+          height: 28px;
+        }
+        .review-reply-content {
+          flex: 1;
+          min-width: 0;
+        }
+        .review-reply-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 4px;
+        }
+        .replier-name {
+          font-weight: 500;
+          font-size: 13px;
+        }
+        .reply-date {
+          font-size: 11px;
+          color: #999;
+        }
+        .reply-text {
+          color: #666;
+          font-size: 13px;
+          margin: 0;
+          line-height: 1.6;
+        }
+        .reply-review-preview {
+          padding: 16px 24px;
+          background: #fafafa;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        .reply-review-preview .review-text {
+          margin-top: 8px;
+          margin-bottom: 0;
         }
         @media (max-width: 768px) {
           .order-detail-content {

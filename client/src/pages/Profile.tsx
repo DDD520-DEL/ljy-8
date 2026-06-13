@@ -6,6 +6,7 @@ import type {
   ItemWithOwner,
   SkillWithProvider,
   ReviewWithUser,
+  ReviewReplyWithUser,
   QueueEntryWithDetails,
   QueueNotification,
   DepositTransaction,
@@ -19,6 +20,11 @@ function Profile() {
   const [myItems, setMyItems] = useState<ItemWithOwner[]>([]);
   const [mySkills, setMySkills] = useState<SkillWithProvider[]>([]);
   const [myReviews, setMyReviews] = useState<ReviewWithUser[]>([]);
+  const [myPostedReviews, setMyPostedReviews] = useState<ReviewWithUser[]>([]);
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<ReviewWithUser | null>(null);
+  const [replyForm, setReplyForm] = useState({ content: '' });
+  const [replying, setReplying] = useState(false);
   const [myQueues, setMyQueues] = useState<QueueEntryWithDetails[]>([]);
   const [notifications, setNotifications] = useState<QueueNotification[]>([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -41,6 +47,8 @@ function Profile() {
       loadMySkills();
     } else if (activeTab === 'reviews') {
       loadMyReviews();
+    } else if (activeTab === 'posted-reviews') {
+      loadMyPostedReviews();
     } else if (activeTab === 'queues') {
       loadMyQueues();
     } else if (activeTab === 'notifications') {
@@ -83,6 +91,43 @@ function Profile() {
     const res = await reviewApi.getReviewsByUser(user.id);
     if (res.success) {
       setMyReviews(res.data || []);
+    }
+  };
+
+  const loadMyPostedReviews = async () => {
+    const res = await reviewApi.getMyPostedReviews();
+    if (res.success) {
+      setMyPostedReviews(res.data || []);
+    }
+  };
+
+  const handleOpenReply = (review: ReviewWithUser) => {
+    setSelectedReview(review);
+    setReplyForm({ content: '' });
+    setShowReplyModal(true);
+  };
+
+  const handleReplySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedReview) return;
+    setReplying(true);
+    try {
+      const res = await reviewApi.createReviewReply(selectedReview.id, replyForm.content);
+      if (res.success) {
+        alert('回复成功！');
+        setShowReplyModal(false);
+        setSelectedReview(null);
+        setReplyForm({ content: '' });
+        if (activeTab === 'reviews') {
+          loadMyReviews();
+        } else if (activeTab === 'posted-reviews') {
+          loadMyPostedReviews();
+        }
+      } else {
+        alert(res.message || '回复失败');
+      }
+    } finally {
+      setReplying(false);
     }
   };
 
@@ -285,6 +330,12 @@ function Profile() {
           onClick={() => setActiveTab('reviews')}
         >
           收到的评价
+        </button>
+        <button
+          className={`tab ${activeTab === 'posted-reviews' ? 'active' : ''}`}
+          onClick={() => setActiveTab('posted-reviews')}
+        >
+          我发出的评价
         </button>
         <button
           className={`tab ${activeTab === 'orders' ? 'active' : ''}`}
@@ -582,23 +633,132 @@ function Profile() {
               </div>
             ) : (
               <div className="review-list">
-                {myReviews.map((review) => (
-                  <div key={review.id} className="review-item">
-                    <img src={review.reviewer.avatar} alt="" className="avatar" />
-                    <div className="review-content">
-                      <div className="review-header">
-                        <span className="reviewer-name">{review.reviewer.nickname}</span>
-                        <span className="review-rating">
-                          {'⭐'.repeat(review.rating)}
+                {myReviews.map((review) => {
+                  const canReply = review.revieweeId === user?.id || review.reviewerId === user?.id;
+                  return (
+                    <div key={review.id} className="review-item">
+                      <img src={review.reviewer.avatar} alt="" className="avatar" />
+                      <div className="review-content">
+                        <div className="review-header">
+                          <div>
+                            <span className="reviewer-name">{review.reviewer.nickname}</span>
+                            {review.reviewerId === user?.id && (
+                              <span className="review-tag tag tag-blue">我</span>
+                            )}
+                            <span className="review-rating">
+                              {'⭐'.repeat(review.rating)}
+                            </span>
+                          </div>
+                          {canReply && (
+                            <button
+                              className="btn btn-link btn-sm"
+                              onClick={() => handleOpenReply(review)}
+                            >
+                              回复
+                            </button>
+                          )}
+                        </div>
+                        <p className="review-text">{review.content}</p>
+                        <span className="review-date">
+                          {new Date(review.createdAt).toLocaleString()}
                         </span>
+                        {review.replies && review.replies.length > 0 && (
+                          <div className="review-replies">
+                            {review.replies.map((reply) => (
+                              <div key={reply.id} className="review-reply-item">
+                                <img src={reply.replier.avatar} alt="" className="avatar avatar-sm" />
+                                <div className="review-reply-content">
+                                  <div className="review-reply-header">
+                                    <span className="replier-name">
+                                      {reply.replier.nickname}
+                                      {reply.replierId === user?.id && (
+                                        <span className="review-tag tag tag-blue">我</span>
+                                      )}
+                                    </span>
+                                    <span className="reply-date">
+                                      {new Date(reply.createdAt).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <p className="reply-text">{reply.content}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <p className="review-text">{review.content}</p>
-                      <span className="review-date">
-                        {new Date(review.createdAt).toLocaleDateString()}
-                      </span>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'posted-reviews' && (
+          <div className="list-section">
+            <h3>我发出的评价</h3>
+            {myPostedReviews.length === 0 ? (
+              <div className="empty-list">
+                <p>暂无发出的评价</p>
+              </div>
+            ) : (
+              <div className="review-list">
+                {myPostedReviews.map((review) => {
+                  const canReply = review.revieweeId === user?.id || review.reviewerId === user?.id;
+                  return (
+                    <div key={review.id} className="review-item">
+                      <img src={review.reviewee.avatar} alt="" className="avatar" />
+                      <div className="review-content">
+                        <div className="review-header">
+                          <div>
+                            <span className="reviewer-name">
+                              评价对象：{review.reviewee.nickname}
+                            </span>
+                            <span className="review-tag tag tag-blue">我发出</span>
+                            <span className="review-rating">
+                              {'⭐'.repeat(review.rating)}
+                            </span>
+                          </div>
+                          {canReply && (
+                            <button
+                              className="btn btn-link btn-sm"
+                              onClick={() => handleOpenReply(review)}
+                            >
+                              回复
+                            </button>
+                          )}
+                        </div>
+                        <p className="review-text">{review.content}</p>
+                        <span className="review-date">
+                          {new Date(review.createdAt).toLocaleString()}
+                        </span>
+                        {review.replies && review.replies.length > 0 && (
+                          <div className="review-replies">
+                            {review.replies.map((reply) => (
+                              <div key={reply.id} className="review-reply-item">
+                                <img src={reply.replier.avatar} alt="" className="avatar avatar-sm" />
+                                <div className="review-reply-content">
+                                  <div className="review-reply-header">
+                                    <span className="replier-name">
+                                      {reply.replier.nickname}
+                                      {reply.replierId === user?.id && (
+                                        <span className="review-tag tag tag-blue">我</span>
+                                      )}
+                                    </span>
+                                    <span className="reply-date">
+                                      {new Date(reply.createdAt).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <p className="reply-text">{reply.content}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -781,6 +941,52 @@ function Profile() {
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
                   {submitting ? '提交中...' : '确认借用'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showReplyModal && selectedReview && (
+        <div className="modal-overlay" onClick={() => setShowReplyModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>回复评价</h3>
+              <button className="modal-close" onClick={() => setShowReplyModal(false)}>
+                ×
+              </button>
+            </div>
+            <div className="reply-review-preview">
+              <div className="review-header">
+                <span className="reviewer-name">{selectedReview.reviewer.nickname}</span>
+                <span className="review-rating">
+                  {'⭐'.repeat(selectedReview.rating)}
+                </span>
+              </div>
+              <p className="review-text">{selectedReview.content}</p>
+            </div>
+            <form onSubmit={handleReplySubmit}>
+              <div className="form-group">
+                <label className="form-label">回复内容</label>
+                <textarea
+                  className="form-textarea"
+                  value={replyForm.content}
+                  onChange={(e) => setReplyForm({ content: e.target.value })}
+                  placeholder="请输入您的回复..."
+                  required
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowReplyModal(false)}
+                >
+                  取消
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={replying}>
+                  {replying ? '提交中...' : '提交回复'}
                 </button>
               </div>
             </form>
@@ -1136,6 +1342,7 @@ function Profile() {
         }
         .review-content {
           flex: 1;
+          min-width: 0;
         }
         .review-header {
           display: flex;
@@ -1145,6 +1352,19 @@ function Profile() {
         }
         .reviewer-name {
           font-weight: 500;
+          margin-right: 8px;
+        }
+        .review-tag {
+          display: inline-block;
+          padding: 1px 8px;
+          border-radius: 10px;
+          font-size: 11px;
+          font-weight: 500;
+          margin-right: 8px;
+        }
+        .tag-blue {
+          background: #e6f7ff;
+          color: #1890ff;
         }
         .review-rating {
           font-size: 14px;
@@ -1152,10 +1372,113 @@ function Profile() {
         .review-text {
           color: #666;
           margin-bottom: 8px;
+          line-height: 1.6;
         }
         .review-date {
           font-size: 12px;
           color: #999;
+        }
+        .btn-link {
+          background: none;
+          border: none;
+          color: #667eea;
+          cursor: pointer;
+          padding: 4px 8px;
+        }
+        .btn-link:hover {
+          text-decoration: underline;
+        }
+        .review-replies {
+          margin-top: 12px;
+          padding-left: 12px;
+          border-left: 2px solid #e8e8e8;
+        }
+        .review-reply-item {
+          display: flex;
+          gap: 8px;
+          padding: 10px 0;
+        }
+        .avatar-sm {
+          width: 28px;
+          height: 28px;
+        }
+        .review-reply-content {
+          flex: 1;
+          min-width: 0;
+        }
+        .review-reply-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 4px;
+        }
+        .replier-name {
+          font-weight: 500;
+          font-size: 13px;
+        }
+        .reply-date {
+          font-size: 11px;
+          color: #999;
+        }
+        .reply-text {
+          color: #666;
+          font-size: 13px;
+          margin: 0;
+          line-height: 1.6;
+        }
+        .reply-review-preview {
+          padding: 16px 24px;
+          background: #fafafa;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        .reply-review-preview .review-text {
+          margin-top: 8px;
+          margin-bottom: 0;
+        }
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .modal {
+          background: white;
+          border-radius: 12px;
+          width: 100%;
+          max-width: 500px;
+          max-height: 90vh;
+          overflow-y: auto;
+        }
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 20px 24px;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        .modal-header h3 {
+          font-size: 18px;
+        }
+        .modal-close {
+          font-size: 24px;
+          background: none;
+          color: #999;
+          cursor: pointer;
+        }
+        .modal form {
+          padding: 24px;
+        }
+        .modal-footer {
+          display: flex;
+          justify-content: flex-end;
+          gap: 12px;
+          margin-top: 24px;
         }
         .queue-record-list {
           display: flex;
