@@ -27,11 +27,11 @@ export class DisputeRepository {
     return db.findMany<Dispute>(this.collection, (dispute) => dispute.status === status);
   }
 
-  public create(disputeData: Omit<Dispute, 'id' | 'createdAt' | 'status'>): Dispute {
+  public create(disputeData: Omit<Dispute, 'id' | 'createdAt'> & { status?: Dispute['status'] }): Dispute {
     const dispute: Dispute = {
       id: generateId(),
       ...disputeData,
-      status: 'pending',
+      status: disputeData.status || 'pending',
       createdAt: getCurrentTime(),
     };
     return db.insert<Dispute>(this.collection, dispute);

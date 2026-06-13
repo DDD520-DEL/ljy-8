@@ -60,7 +60,7 @@ export class DisputeService {
 
   public createDispute(
     complainantId: string,
-    disputeData: Omit<Dispute, 'id' | 'complainantId' | 'createdAt' | 'status'>
+    disputeData: Omit<Dispute, 'id' | 'complainantId' | 'createdAt'> & { status?: DisputeStatus }
   ): DisputeWithDetails | null {
     let respondentId: string | undefined;
     let orderTitle = '';
