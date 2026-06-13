@@ -9,6 +9,7 @@ import {
   NegotiationStatus
 } from '../types';
 import { timeCoinService } from './TimeCoinService';
+import { transactionService } from './TransactionService';
 import { notificationService } from './NotificationService';
 import { generateId, getCurrentTime } from '../utils/helpers';
 import { BorrowOrderWithDetails } from '../types';
@@ -385,6 +386,25 @@ export class DisputeService {
       depositStatus: refundAmount > 0 ? 'partially_refunded' : 'refunded',
     });
     orderRepository.addBorrowTimelineEvent(orderId, `赔偿协商完成：扣除赔偿¥${compensationAmount}，退还押金¥${refundAmount}`, 'system');
+
+    const item = orderRepository.toBorrowOrderWithDetails(order).item;
+    const itemTitle = item?.title || '物品';
+
+    transactionService.recordDepositDeduction(
+      order.borrowerId,
+      orderId,
+      compensationAmount,
+      `「${itemTitle}」损坏扣除赔偿`
+    );
+
+    if (refundAmount > 0) {
+      transactionService.recordDepositRefund(
+        order.borrowerId,
+        orderId,
+        refundAmount,
+        `「${itemTitle}」赔偿后退还剩余押金`
+      );
+    }
   }
 
   private getOrderTitle(dispute: Dispute): string {
@@ -418,6 +438,14 @@ export class DisputeService {
 
     if (dispute.orderType === 'service' && refundTimeCoins) {
       timeCoinService.addCoins(dispute.complainantId, refundTimeCoins);
+      transactionService.recordTimeCoinIncome(
+        dispute.complainantId,
+        disputeId,
+        'service_order',
+        refundTimeCoins,
+        '纠纷退款',
+        `服务纠纷管理员裁定退还时间币`
+      );
     }
 
     if (dispute.orderType === 'borrow' && refundDeposit !== undefined) {
@@ -431,6 +459,26 @@ export class DisputeService {
           depositStatus: refundDeposit > 0 ? (refundDeposit >= order.deposit ? 'refunded' : 'partially_refunded') : 'refunded',
         });
         orderRepository.addBorrowTimelineEvent(dispute.orderId, `管理员裁定：扣除赔偿¥${compensation}，退还押金¥${refundDeposit}`, resolverId);
+
+        const item = orderRepository.toBorrowOrderWithDetails(order).item;
+        const itemTitle = item?.title || '物品';
+
+        if (compensation > 0) {
+          transactionService.recordDepositDeduction(
+            order.borrowerId,
+            dispute.orderId,
+            compensation,
+            `「${itemTitle}」管理员裁定扣除赔偿`
+          );
+        }
+        if (refundDeposit > 0) {
+          transactionService.recordDepositRefund(
+            order.borrowerId,
+            dispute.orderId,
+            refundDeposit,
+            `「${itemTitle}」管理员裁定退还押金`
+          );
+        }
       }
     }
 

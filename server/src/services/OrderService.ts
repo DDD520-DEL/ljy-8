@@ -14,6 +14,7 @@ import {
   DisputeNegotiation
 } from '../types';
 import { timeCoinService } from './TimeCoinService';
+import { transactionService } from './TransactionService';
 import { getCurrentTime, generateId } from '../utils/helpers';
 import { queueService } from './QueueService';
 import { notificationService } from './NotificationService';
@@ -140,8 +141,14 @@ export class OrderService {
     orderRepository.addBorrowTimelineEvent(orderId, '物品已借出', lenderId);
     
     itemRepository.update(order.itemId, { status: 'borrowed' });
-    
+
     const item = itemRepository.findById(order.itemId);
+    transactionService.recordDepositPayment(
+      order.borrowerId,
+      orderId,
+      order.deposit,
+      `借用「${item?.title || '物品'}」缴纳押金`
+    );
     notificationService.sendOrderStatusNotification(
       order.borrowerId,
       orderId,
@@ -170,9 +177,16 @@ export class OrderService {
     
     itemRepository.update(order.itemId, { status: 'available' });
 
+    const item = itemRepository.findById(order.itemId);
+    transactionService.recordDepositRefund(
+      order.borrowerId,
+      orderId,
+      order.deposit,
+      `归还「${item?.title || '物品'}」退还押金`
+    );
+
     queueService.notifyNextInQueue(order.itemId);
     
-    const item = itemRepository.findById(order.itemId);
     notificationService.sendOrderStatusNotification(
       order.borrowerId,
       orderId,
@@ -327,10 +341,19 @@ export class OrderService {
 
     timeCoinService.deductCoins(order.clientId, order.timeCoinPrice);
 
+    const skill = skillRepository.findById(order.skillId);
+    transactionService.recordTimeCoinExpenditure(
+      order.clientId,
+      orderId,
+      'service_order',
+      order.timeCoinPrice,
+      skill?.title || '服务',
+      `预约「${skill?.title || '服务'}」支付时间币`
+    );
+
     orderRepository.updateServiceOrder(orderId, { status: 'approved' as ServiceOrderStatus });
     orderRepository.addServiceTimelineEvent(orderId, '服务方已同意服务申请', providerId);
     
-    const skill = skillRepository.findById(order.skillId);
     notificationService.sendOrderStatusNotification(
       order.clientId,
       orderId,
@@ -395,10 +418,19 @@ export class OrderService {
 
     timeCoinService.addCoins(order.providerId, order.timeCoinPrice);
 
+    const skill = skillRepository.findById(order.skillId);
+    transactionService.recordTimeCoinIncome(
+      order.providerId,
+      orderId,
+      'service_order',
+      order.timeCoinPrice,
+      skill?.title || '服务',
+      `完成「${skill?.title || '服务'}」获得时间币`
+    );
+
     orderRepository.updateServiceOrder(orderId, { status: 'completed' as ServiceOrderStatus });
     orderRepository.addServiceTimelineEvent(orderId, '服务已完成', clientId);
     
-    const skill = skillRepository.findById(order.skillId);
     notificationService.sendOrderStatusNotification(
       order.providerId,
       orderId,

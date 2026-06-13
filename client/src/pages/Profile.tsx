@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { authApi, itemApi, skillApi, reviewApi, queueApi } from '../api';
+import { authApi, itemApi, skillApi, reviewApi, queueApi, transactionApi } from '../api';
 import type {
   ItemWithOwner,
   SkillWithProvider,
   ReviewWithUser,
   QueueEntryWithDetails,
   QueueNotification,
+  DepositTransaction,
+  TimeCoinTransaction,
 } from '../types';
 
 function Profile() {
@@ -27,6 +29,10 @@ function Profile() {
     message: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [depositTransactions, setDepositTransactions] = useState<DepositTransaction[]>([]);
+  const [timeCoinTransactions, setTimeCoinTransactions] = useState<TimeCoinTransaction[]>([]);
+  const [depositFilter, setDepositFilter] = useState<string>('');
+  const [timeCoinFilter, setTimeCoinFilter] = useState<string>('');
 
   useEffect(() => {
     if (activeTab === 'items') {
@@ -39,8 +45,24 @@ function Profile() {
       loadMyQueues();
     } else if (activeTab === 'notifications') {
       loadNotifications();
+    } else if (activeTab === 'deposit') {
+      loadDepositTransactions();
+    } else if (activeTab === 'timecoin') {
+      loadTimeCoinTransactions();
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'deposit') {
+      loadDepositTransactions();
+    }
+  }, [depositFilter]);
+
+  useEffect(() => {
+    if (activeTab === 'timecoin') {
+      loadTimeCoinTransactions();
+    }
+  }, [timeCoinFilter]);
 
   const loadMyItems = async () => {
     const res = await itemApi.getMyItems();
@@ -75,6 +97,20 @@ function Profile() {
     const res = await queueApi.getNotifications();
     if (res.success) {
       setNotifications(res.data || []);
+    }
+  };
+
+  const loadDepositTransactions = async () => {
+    const res = await transactionApi.getDepositTransactions(depositFilter || undefined);
+    if (res.success) {
+      setDepositTransactions(res.data || []);
+    }
+  };
+
+  const loadTimeCoinTransactions = async () => {
+    const res = await transactionApi.getTimeCoinTransactions(timeCoinFilter || undefined);
+    if (res.success) {
+      setTimeCoinTransactions(res.data || []);
     }
   };
 
@@ -154,6 +190,23 @@ function Profile() {
       queue_cancelled: { icon: '❌', color: '#999' },
     };
     return map[type] || { icon: '📧', color: '#667eea' };
+  };
+
+  const getDepositTypeInfo = (type: string) => {
+    const map: Record<string, { text: string; color: string; bgColor: string; icon: string }> = {
+      payment: { text: '缴纳', color: '#ff4d4f', bgColor: '#fff1f0', icon: '💰' },
+      refund: { text: '退还', color: '#52c41a', bgColor: '#f6ffed', icon: '↩️' },
+      deduction: { text: '扣除', color: '#fa8c16', bgColor: '#fff7e6', icon: '⚡' },
+    };
+    return map[type] || { text: type, color: '#999', bgColor: '#f5f5f5', icon: '📋' };
+  };
+
+  const getTimeCoinTypeInfo = (type: string) => {
+    const map: Record<string, { text: string; color: string; bgColor: string; icon: string }> = {
+      income: { text: '收入', color: '#52c41a', bgColor: '#f6ffed', icon: '📈' },
+      expenditure: { text: '支出', color: '#ff4d4f', bgColor: '#fff1f0', icon: '📉' },
+    };
+    return map[type] || { text: type, color: '#999', bgColor: '#f5f5f5', icon: '📋' };
   };
 
   const today = new Date().toISOString().split('T')[0];
@@ -238,6 +291,18 @@ function Profile() {
           onClick={() => setActiveTab('orders')}
         >
           我的订单
+        </button>
+        <button
+          className={`tab ${activeTab === 'deposit' ? 'active' : ''}`}
+          onClick={() => setActiveTab('deposit')}
+        >
+          押金流水
+        </button>
+        <button
+          className={`tab ${activeTab === 'timecoin' ? 'active' : ''}`}
+          onClick={() => setActiveTab('timecoin')}
+        >
+          时间币明细
         </button>
       </div>
 
@@ -549,6 +614,110 @@ function Profile() {
             </div>
           </div>
         )}
+
+        {activeTab === 'deposit' && (
+          <div className="list-section">
+            <div className="section-header">
+              <h3>押金流水</h3>
+              <div className="filter-group">
+                <select
+                  className="filter-select"
+                  value={depositFilter}
+                  onChange={(e) => setDepositFilter(e.target.value)}
+                >
+                  <option value="">全部类型</option>
+                  <option value="payment">缴纳</option>
+                  <option value="refund">退还</option>
+                  <option value="deduction">扣除</option>
+                </select>
+              </div>
+            </div>
+            {depositTransactions.length === 0 ? (
+              <div className="empty-list">
+                <p>暂无押金流水记录</p>
+              </div>
+            ) : (
+              <div className="transaction-list">
+                {depositTransactions.map((tx) => {
+                  const typeInfo = getDepositTypeInfo(tx.type);
+                  return (
+                    <div key={tx.id} className="transaction-item">
+                      <div className="transaction-icon" style={{ background: typeInfo.bgColor, color: typeInfo.color }}>
+                        {typeInfo.icon}
+                      </div>
+                      <div className="transaction-detail">
+                        <div className="transaction-header">
+                          <span className="transaction-desc">{tx.description}</span>
+                          <span className="transaction-amount" style={{ color: typeInfo.color }}>
+                            {tx.type === 'refund' ? '+' : '-'}¥{tx.amount}
+                          </span>
+                        </div>
+                        <div className="transaction-meta">
+                          <span className="transaction-type-tag" style={{ background: typeInfo.bgColor, color: typeInfo.color }}>
+                            {typeInfo.text}
+                          </span>
+                          <span className="transaction-time">{new Date(tx.createdAt).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'timecoin' && (
+          <div className="list-section">
+            <div className="section-header">
+              <h3>时间币明细</h3>
+              <div className="filter-group">
+                <select
+                  className="filter-select"
+                  value={timeCoinFilter}
+                  onChange={(e) => setTimeCoinFilter(e.target.value)}
+                >
+                  <option value="">全部类型</option>
+                  <option value="income">收入</option>
+                  <option value="expenditure">支出</option>
+                </select>
+              </div>
+            </div>
+            {timeCoinTransactions.length === 0 ? (
+              <div className="empty-list">
+                <p>暂无时间币明细记录</p>
+              </div>
+            ) : (
+              <div className="transaction-list">
+                {timeCoinTransactions.map((tx) => {
+                  const typeInfo = getTimeCoinTypeInfo(tx.type);
+                  return (
+                    <div key={tx.id} className="transaction-item">
+                      <div className="transaction-icon" style={{ background: typeInfo.bgColor, color: typeInfo.color }}>
+                        {typeInfo.icon}
+                      </div>
+                      <div className="transaction-detail">
+                        <div className="transaction-header">
+                          <span className="transaction-desc">{tx.description}</span>
+                          <span className="transaction-amount" style={{ color: typeInfo.color }}>
+                            {tx.type === 'income' ? '+' : '-'}⏰ {tx.amount}
+                          </span>
+                        </div>
+                        <div className="transaction-meta">
+                          <span className="transaction-type-tag" style={{ background: typeInfo.bgColor, color: typeInfo.color }}>
+                            {typeInfo.text}
+                          </span>
+                          <span className="transaction-source">来源：{tx.source}</span>
+                          <span className="transaction-time">{new Date(tx.createdAt).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="logout-section">
@@ -726,6 +895,95 @@ function Profile() {
         .tab.active .tab-badge {
           background: white;
           color: #ff4d4f;
+        }
+        .filter-group {
+          display: flex;
+          gap: 8px;
+        }
+        .filter-select {
+          padding: 6px 12px;
+          border: 1px solid #d9d9d9;
+          border-radius: 6px;
+          font-size: 13px;
+          color: #333;
+          background: white;
+          cursor: pointer;
+          outline: none;
+        }
+        .filter-select:focus {
+          border-color: #667eea;
+        }
+        .transaction-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .transaction-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+          padding: 16px;
+          background: #fafafa;
+          border-radius: 8px;
+          transition: all 0.2s;
+        }
+        .transaction-item:hover {
+          background: #f5f5f5;
+        }
+        .transaction-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          flex-shrink: 0;
+        }
+        .transaction-detail {
+          flex: 1;
+          min-width: 0;
+        }
+        .transaction-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+          gap: 12px;
+        }
+        .transaction-desc {
+          font-size: 14px;
+          font-weight: 500;
+          color: #333;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .transaction-amount {
+          font-size: 16px;
+          font-weight: 600;
+          white-space: nowrap;
+        }
+        .transaction-meta {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        .transaction-type-tag {
+          display: inline-block;
+          padding: 2px 10px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 600;
+        }
+        .transaction-source {
+          font-size: 12px;
+          color: #666;
+        }
+        .transaction-time {
+          font-size: 12px;
+          color: #999;
         }
         .profile-content {
           background: white;

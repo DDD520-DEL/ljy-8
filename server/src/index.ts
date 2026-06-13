@@ -10,6 +10,7 @@ import disputeRoutes from './routes/disputes';
 import queueRoutes from './routes/queue';
 import notificationRoutes from './routes/notifications';
 import neighborhoodRoutes from './routes/neighborhood';
+import transactionRoutes from './routes/transactions';
 import { db } from './utils/db';
 import { initializeSampleData } from './utils/initData';
 import { queueService } from './services/QueueService';
@@ -34,6 +35,7 @@ app.use('/api/disputes', disputeRoutes);
 app.use('/api/queue', queueRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/neighborhood', neighborhoodRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 app.get('/api/health', (_req: express.Request, res: express.Response) => {
   res.json({ success: true, message: '邻里共享平台服务运行中' });

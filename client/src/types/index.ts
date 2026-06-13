@@ -295,6 +295,32 @@ export type NotificationType =
   | 'queue_cancelled'
   | 'system';
 
+export type DepositTransactionType = 'payment' | 'refund' | 'deduction';
+
+export interface DepositTransaction {
+  id: string;
+  userId: string;
+  orderId: string;
+  type: DepositTransactionType;
+  amount: number;
+  description: string;
+  createdAt: string;
+}
+
+export type TimeCoinTransactionType = 'income' | 'expenditure';
+
+export interface TimeCoinTransaction {
+  id: string;
+  userId: string;
+  relatedId: string;
+  relatedType: 'borrow_order' | 'service_order' | 'system';
+  type: TimeCoinTransactionType;
+  amount: number;
+  source: string;
+  description: string;
+  createdAt: string;
+}
+
 export interface Notification {
   id: string;
   userId: string;

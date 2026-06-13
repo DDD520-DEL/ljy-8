@@ -176,4 +176,11 @@ export const neighborhoodApi = {
   getStats: () => request('/neighborhood/stats'),
 };
 
+export const transactionApi = {
+  getDepositTransactions: (type?: string) =>
+    request('/transactions/deposit', { params: type ? { type } : {} }),
+  getTimeCoinTransactions: (type?: string) =>
+    request('/transactions/time-coin', { params: type ? { type } : {} }),
+};
+
 export default api;
