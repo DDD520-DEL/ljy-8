@@ -96,6 +96,82 @@ export class DisputeController {
       res.status(400).json({ success: false, message: err.message });
     }
   }
+
+  public async makeOffer(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ success: false, message: '未登录' });
+        return;
+      }
+      const { id } = req.params;
+      const { amount, message } = req.body;
+      const dispute = disputeService.makeOffer(id, req.user.id, amount, message);
+      if (!dispute) {
+        res.status(404).json({ success: false, message: '纠纷不存在或操作失败' });
+        return;
+      }
+      res.json({ success: true, data: dispute });
+    } catch (err: any) {
+      res.status(400).json({ success: false, message: err.message });
+    }
+  }
+
+  public async acceptOffer(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ success: false, message: '未登录' });
+        return;
+      }
+      const { id } = req.params;
+      const { amount } = req.body;
+      const dispute = disputeService.acceptOffer(id, req.user.id, amount);
+      if (!dispute) {
+        res.status(404).json({ success: false, message: '纠纷不存在或操作失败' });
+        return;
+      }
+      res.json({ success: true, data: dispute });
+    } catch (err: any) {
+      res.status(400).json({ success: false, message: err.message });
+    }
+  }
+
+  public async sendMessage(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ success: false, message: '未登录' });
+        return;
+      }
+      const { id } = req.params;
+      const { content, amount } = req.body;
+      const dispute = disputeService.sendNegotiationMessage(id, req.user.id, content, amount);
+      if (!dispute) {
+        res.status(404).json({ success: false, message: '纠纷不存在或操作失败' });
+        return;
+      }
+      res.json({ success: true, data: dispute });
+    } catch (err: any) {
+      res.status(400).json({ success: false, message: err.message });
+    }
+  }
+
+  public async escalateDispute(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ success: false, message: '未登录' });
+        return;
+      }
+      const { id } = req.params;
+      const { reason } = req.body;
+      const dispute = disputeService.escalateDispute(id, req.user.id, reason);
+      if (!dispute) {
+        res.status(404).json({ success: false, message: '纠纷不存在或操作失败' });
+        return;
+      }
+      res.json({ success: true, data: dispute });
+    } catch (err: any) {
+      res.status(400).json({ success: false, message: err.message });
+    }
+  }
 }
 
 export const disputeController = new DisputeController();

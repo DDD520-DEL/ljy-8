@@ -70,6 +70,35 @@ export interface TimelineEvent {
 
 export type BorrowOrderStatus = 'pending' | 'approved' | 'rejected' | 'borrowing' | 'returned' | 'disputed';
 
+export type DepositStatus = 'normal' | 'frozen' | 'partially_refunded' | 'refunded';
+
+export interface DamageReport {
+  reporterId: string;
+  description: string;
+  photos: string[];
+  reportedAt: string;
+}
+
+export interface NegotiationMessage {
+  id: string;
+  senderId: string;
+  content: string;
+  amount?: number;
+  createdAt: string;
+}
+
+export type NegotiationStatus = 'awaiting_lender_offer' | 'awaiting_borrower_response' | 'awaiting_lender_confirmation' | 'agreed' | 'escalated';
+
+export interface DisputeNegotiation {
+  status: NegotiationStatus;
+  lenderOffer?: number;
+  borrowerOffer?: number;
+  acceptedAmount?: number;
+  messages: NegotiationMessage[];
+  lastOfferBy?: string;
+  lastOfferAmount?: number;
+}
+
 export interface BorrowOrder {
   id: string;
   itemId: string;
@@ -79,6 +108,10 @@ export interface BorrowOrder {
   endDate: string;
   actualReturnDate?: string;
   deposit: number;
+  depositStatus?: DepositStatus;
+  compensationAmount?: number;
+  refundAmount?: number;
+  damageReport?: DamageReport;
   status: BorrowOrderStatus;
   message?: string;
   timeline: TimelineEvent[];
@@ -129,7 +162,9 @@ export interface ReviewWithUser extends Review {
   reviewee: PublicUser;
 }
 
-export type DisputeStatus = 'pending' | 'reviewing' | 'resolved';
+export type DisputeStatus = 'pending' | 'negotiating' | 'reviewing' | 'resolved';
+
+export type DisputeCategory = 'general' | 'damage';
 
 export interface Dispute {
   id: string;
@@ -141,10 +176,12 @@ export interface Dispute {
   description: string;
   evidence: string[];
   status: DisputeStatus;
+  category?: DisputeCategory;
   resolution?: string;
   resolverId?: string;
   createdAt: string;
   resolvedAt?: string;
+  negotiation?: DisputeNegotiation;
 }
 
 export interface DisputeWithDetails extends Dispute {
@@ -243,6 +280,29 @@ export interface Notification {
   relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue';
   read: boolean;
   createdAt: string;
+}
+
+export interface DamageReportRequest {
+  description: string;
+  photos: string[];
+}
+
+export interface NegotiationOfferRequest {
+  amount: number;
+  message?: string;
+}
+
+export interface NegotiationMessageRequest {
+  content: string;
+  amount?: number;
+}
+
+export interface NegotiationAcceptRequest {
+  amount: number;
+}
+
+export interface EscalateDisputeRequest {
+  reason?: string;
 }
 
 export interface ApiResponse<T = any> {

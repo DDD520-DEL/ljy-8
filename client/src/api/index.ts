@@ -80,6 +80,8 @@ export const orderApi = {
     request(`/orders/borrow/${id}/lend`, { method: 'PUT' }),
   confirmReturn: (id: string) =>
     request(`/orders/borrow/${id}/return`, { method: 'PUT' }),
+  confirmReturnWithDamage: (id: string, data: { description: string; photos: string[] }) =>
+    request(`/orders/borrow/${id}/return-damage`, { method: 'PUT', data }),
 
   getServiceOrders: (role?: string) =>
     request('/orders/service', { params: { role } }),
@@ -115,6 +117,14 @@ export const disputeApi = {
     request(`/disputes/${id}/review`, { method: 'PUT' }),
   resolveDispute: (id: string, data: any) =>
     request(`/disputes/${id}/resolve`, { method: 'PUT', data }),
+  makeOffer: (id: string, data: { amount: number; message?: string }) =>
+    request(`/disputes/${id}/offer`, { method: 'PUT', data }),
+  acceptOffer: (id: string, data: { amount: number }) =>
+    request(`/disputes/${id}/accept`, { method: 'PUT', data }),
+  sendMessage: (id: string, data: { content: string; amount?: number }) =>
+    request(`/disputes/${id}/message`, { method: 'PUT', data }),
+  escalateDispute: (id: string, data?: { reason?: string }) =>
+    request(`/disputes/${id}/escalate`, { method: 'PUT', data }),
 };
 
 export const queueApi = {

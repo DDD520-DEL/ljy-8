@@ -21,8 +21,10 @@ function OrderDetail({ type }: OrderDetailProps) {
   const [loading, setLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [showDamageModal, setShowDamageModal] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 5, content: '' });
   const [disputeForm, setDisputeForm] = useState({ reason: '', description: '' });
+  const [damageForm, setDamageForm] = useState({ description: '', photos: '' });
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -102,10 +104,39 @@ function OrderDetail({ type }: OrderDetailProps) {
     if (!id || type !== 'borrow') return;
     const res = await orderApi.confirmReturn(id);
     if (res.success) {
-      alert('已确认归还');
+      alert('已确认归还，押金已全额退还');
       loadOrder();
     } else {
       alert(res.message || '操作失败');
+    }
+  };
+
+  const handleReportDamage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || type !== 'borrow') return;
+    if (!damageForm.description.trim()) {
+      alert('请填写损坏描述');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const photos = damageForm.photos
+        .split('\n')
+        .map(p => p.trim())
+        .filter(p => p.length > 0);
+      const res = await orderApi.confirmReturnWithDamage(id, {
+        description: damageForm.description.trim(),
+        photos,
+      });
+      if (res.success) {
+        alert('已标记损坏并冻结押金，已自动发起赔偿协商');
+        setShowDamageModal(false);
+        navigate('/disputes');
+      } else {
+        alert(res.message || '操作失败');
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -190,7 +221,7 @@ function OrderDetail({ type }: OrderDetailProps) {
         rejected: { text: '已拒绝', color: 'red' },
         borrowing: { text: '借用中', color: 'green' },
         returned: { text: '已归还', color: 'gray' },
-        disputed: { text: '纠纷中', color: 'red' },
+        disputed: { text: '纠纷/赔偿协商', color: 'red' },
       };
       return map[status] || { text: status, color: 'gray' };
     } else {
@@ -204,6 +235,16 @@ function OrderDetail({ type }: OrderDetailProps) {
       };
       return map[status] || { text: status, color: 'gray' };
     }
+  };
+
+  const getDepositStatusText = (status?: string) => {
+    const map: Record<string, { text: string; color: string }> = {
+      normal: { text: '正常', color: 'green' },
+      frozen: { text: '已冻结', color: 'orange' },
+      partially_refunded: { text: '部分退还', color: 'blue' },
+      refunded: { text: '已退还', color: 'gray' },
+    };
+    return map[status || 'normal'] || { text: '正常', color: 'green' };
   };
 
   const isLenderOrProvider =
@@ -302,6 +343,53 @@ function OrderDetail({ type }: OrderDetailProps) {
                     <span className="info-value">
                       {(order as BorrowOrderWithDetails).actualReturnDate?.split('T')[0]}
                     </span>
+                  </div>
+                )}
+                <div className="info-row">
+                  <span className="info-label">押金金额</span>
+                  <span className="info-value">¥{(order as BorrowOrderWithDetails).deposit}</span>
+                </div>
+                {(order as BorrowOrderWithDetails).depositStatus && (
+                  <div className="info-row">
+                    <span className="info-label">押金状态</span>
+                    <span className="info-value">
+                      <span className={`tag tag-${getDepositStatusText((order as BorrowOrderWithDetails).depositStatus).color}`}>
+                        {getDepositStatusText((order as BorrowOrderWithDetails).depositStatus).text}
+                      </span>
+                    </span>
+                  </div>
+                )}
+                {(order as BorrowOrderWithDetails).compensationAmount !== undefined && (
+                  <div className="info-row">
+                    <span className="info-label">赔偿金额</span>
+                    <span className="info-value text-red">¥{(order as BorrowOrderWithDetails).compensationAmount}</span>
+                  </div>
+                )}
+                {(order as BorrowOrderWithDetails).refundAmount !== undefined && (
+                  <div className="info-row">
+                    <span className="info-label">退还押金</span>
+                    <span className="info-value text-green">¥{(order as BorrowOrderWithDetails).refundAmount}</span>
+                  </div>
+                )}
+                {(order as BorrowOrderWithDetails).damageReport && (
+                  <div className="damage-report-section">
+                    <h4 style={{ margin: '16px 0 8px', fontSize: '14px', color: '#ff4d4f' }}>⚠️ 损坏报备</h4>
+                    <div style={{ background: '#fff1f0', padding: '12px', borderRadius: '8px' }}>
+                      <p style={{ margin: '0 0 8px', fontSize: '14px' }}>
+                        {(order as BorrowOrderWithDetails).damageReport?.description}
+                      </p>
+                      {(order as BorrowOrderWithDetails).damageReport?.photos &&
+                        (order as BorrowOrderWithDetails).damageReport!.photos.length > 0 && (
+                          <div className="damage-photos">
+                            {(order as BorrowOrderWithDetails).damageReport!.photos.map((photo, idx) => (
+                              <img key={idx} src={photo} alt="" className="damage-photo" />
+                            ))}
+                          </div>
+                        )}
+                      <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#999' }}>
+                        报备时间：{new Date((order as BorrowOrderWithDetails).damageReport!.reportedAt).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
                 )}
               </>
@@ -436,9 +524,26 @@ function OrderDetail({ type }: OrderDetailProps) {
             )}
 
             {type === 'borrow' && isLenderOrProvider && order.status === 'borrowing' && (
-              <button className="btn btn-success w-full" onClick={handleConfirmReturn}>
-                确认归还
-              </button>
+              <>
+                <button className="btn btn-success w-full" onClick={handleConfirmReturn}>
+                  ✅ 确认归还（物品完好）
+                </button>
+                <button
+                  className="btn btn-danger w-full"
+                  onClick={() => {
+                    setDamageForm({ description: '', photos: '' });
+                    setShowDamageModal(true);
+                  }}
+                >
+                  ⚠️ 标记物品损坏
+                </button>
+              </>
+            )}
+
+            {type === 'borrow' && order.status === 'disputed' && (
+              <Link to={`/disputes`} className="btn btn-warning w-full text-center no-underline">
+                查看赔偿协商
+              </Link>
             )}
 
             {type === 'service' && isLenderOrProvider && order.status === 'approved' && (
@@ -567,6 +672,73 @@ function OrderDetail({ type }: OrderDetailProps) {
                 </button>
                 <button type="submit" className="btn btn-danger" disabled={submitting}>
                   {submitting ? '提交中...' : '提交纠纷'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showDamageModal && (
+        <div className="modal-overlay" onClick={() => setShowDamageModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 style={{ color: '#ff4d4f' }}>⚠️ 物品损坏报备</h3>
+              <button className="modal-close" onClick={() => setShowDamageModal(false)}>
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleReportDamage}>
+              <div className="damage-notice" style={{
+                background: '#fff7e6',
+                border: '1px solid #ffd591',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '16px',
+                fontSize: '13px',
+                color: '#d46b08',
+              }}>
+                <p style={{ margin: '0 0 4px', fontWeight: '500' }}>报备后将触发以下操作：</p>
+                <ul style={{ margin: '0', paddingLeft: '20px' }}>
+                  <li>押金将被冻结，暂不退还</li>
+                  <li>自动发起赔偿协商流程</li>
+                  <li>双方可在纠纷界面协商赔偿金额</li>
+                </ul>
+              </div>
+              <div className="form-group">
+                <label className="form-label">损坏描述 <span style={{ color: 'red' }}>*</span></label>
+                <textarea
+                  className="form-textarea"
+                  value={damageForm.description}
+                  onChange={(e) => setDamageForm({ ...damageForm, description: e.target.value })}
+                  placeholder="请详细描述物品损坏情况，如损坏部位、程度等..."
+                  rows={4}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">照片凭证（每行一个图片URL链接）</label>
+                <textarea
+                  className="form-textarea"
+                  value={damageForm.photos}
+                  onChange={(e) => setDamageForm({ ...damageForm, photos: e.target.value })}
+                  placeholder="请输入图片链接，每行一个链接...&#10;https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg"
+                  rows={4}
+                />
+                <small style={{ color: '#999', marginTop: '4px', display: 'block' }}>
+                  支持输入多个图片链接，每行一个
+                </small>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowDamageModal(false)}
+                >
+                  取消
+                </button>
+                <button type="submit" className="btn btn-danger" disabled={submitting}>
+                  {submitting ? '提交中...' : '确认报备并冻结押金'}
                 </button>
               </div>
             </form>
@@ -800,6 +972,30 @@ function OrderDetail({ type }: OrderDetailProps) {
         }
         .text-muted {
           color: #999;
+        }
+        .text-red {
+          color: #ff4d4f;
+          font-weight: 500;
+        }
+        .text-green {
+          color: #52c41a;
+          font-weight: 500;
+        }
+        .damage-photos {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 8px;
+        }
+        .damage-photo {
+          width: 80px;
+          height: 80px;
+          object-fit: cover;
+          border-radius: 6px;
+          border: 1px solid #f0f0f0;
+        }
+        .no-underline {
+          text-decoration: none;
         }
         @media (max-width: 768px) {
           .order-detail-content {

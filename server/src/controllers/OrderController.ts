@@ -118,6 +118,25 @@ export class OrderController {
     }
   }
 
+  public async confirmReturnWithDamage(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ success: false, message: '未登录' });
+        return;
+      }
+      const { id } = req.params;
+      const { description, photos } = req.body;
+      const order = orderService.confirmReturnWithDamage(id, req.user.id, { description, photos });
+      if (!order) {
+        res.status(404).json({ success: false, message: '订单不存在或无权限操作' });
+        return;
+      }
+      res.json({ success: true, data: order });
+    } catch (err: any) {
+      res.status(400).json({ success: false, message: err.message });
+    }
+  }
+
   // Service Orders
   public async getServiceOrders(req: AuthRequest, res: Response): Promise<void> {
     try {

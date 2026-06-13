@@ -12,6 +12,7 @@ router.put('/borrow/:id/approve', authMiddleware, orderController.approveBorrowO
 router.put('/borrow/:id/reject', authMiddleware, orderController.rejectBorrowOrder.bind(orderController));
 router.put('/borrow/:id/lend', authMiddleware, orderController.confirmLend.bind(orderController));
 router.put('/borrow/:id/return', authMiddleware, orderController.confirmReturn.bind(orderController));
+router.put('/borrow/:id/return-damage', authMiddleware, orderController.confirmReturnWithDamage.bind(orderController));
 
 // Service Orders
 router.get('/service', authMiddleware, orderController.getServiceOrders.bind(orderController));

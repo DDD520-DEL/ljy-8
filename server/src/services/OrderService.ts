@@ -1,16 +1,20 @@
 import { orderRepository } from '../repositories/OrderRepository';
 import { itemRepository } from '../repositories/ItemRepository';
 import { skillRepository } from '../repositories/SkillRepository';
+import { disputeRepository } from '../repositories/DisputeRepository';
 import { 
   BorrowOrderWithDetails, 
   ServiceOrderWithDetails, 
   BorrowRequest, 
   ServiceOrderRequest,
   BorrowOrderStatus,
-  ServiceOrderStatus
+  ServiceOrderStatus,
+  DamageReportRequest,
+  DamageReport,
+  DisputeNegotiation
 } from '../types';
 import { timeCoinService } from './TimeCoinService';
-import { getCurrentTime } from '../utils/helpers';
+import { getCurrentTime, generateId } from '../utils/helpers';
 import { queueService } from './QueueService';
 import { notificationService } from './NotificationService';
 
@@ -158,8 +162,10 @@ export class OrderService {
     orderRepository.updateBorrowOrder(orderId, { 
       status: 'returned' as BorrowOrderStatus,
       actualReturnDate: getCurrentTime(),
+      depositStatus: 'refunded',
+      refundAmount: order.deposit,
     });
-    orderRepository.addBorrowTimelineEvent(orderId, '物品已归还', lenderId);
+    orderRepository.addBorrowTimelineEvent(orderId, '物品已归还，押金全额退还', lenderId);
     
     itemRepository.update(order.itemId, { status: 'available' });
 
@@ -171,6 +177,72 @@ export class OrderService {
       orderId,
       'borrow',
       this.borrowStatusText.returned,
+      item?.title || ''
+    );
+    
+    const updated = orderRepository.findBorrowOrderById(orderId);
+    return updated ? orderRepository.toBorrowOrderWithDetails(updated) : null;
+  }
+
+  public confirmReturnWithDamage(
+    orderId: string, 
+    lenderId: string, 
+    damageReport: DamageReportRequest
+  ): BorrowOrderWithDetails | null {
+    const order = orderRepository.findBorrowOrderById(orderId);
+    if (!order || order.lenderId !== lenderId || order.status !== 'borrowing') {
+      return null;
+    }
+
+    if (!damageReport.description || damageReport.description.trim().length === 0) {
+      throw new Error('请填写损坏描述');
+    }
+
+    const report: DamageReport = {
+      reporterId: lenderId,
+      description: damageReport.description.trim(),
+      photos: damageReport.photos || [],
+      reportedAt: getCurrentTime(),
+    };
+
+    orderRepository.updateBorrowOrder(orderId, { 
+      status: 'disputed' as BorrowOrderStatus,
+      actualReturnDate: getCurrentTime(),
+      depositStatus: 'frozen',
+      damageReport: report,
+    });
+    orderRepository.addBorrowTimelineEvent(orderId, '物品已归还，发现损坏，押金已冻结', lenderId);
+    
+    const item = itemRepository.findById(order.itemId);
+
+    const negotiation: DisputeNegotiation = {
+      status: 'awaiting_lender_offer',
+      messages: [{
+        id: generateId(),
+        senderId: lenderId,
+        content: `物品损坏报备：${report.description}`,
+        createdAt: getCurrentTime(),
+      }],
+    };
+
+    disputeRepository.create({
+      orderId: orderId,
+      orderType: 'borrow',
+      complainantId: lenderId,
+      respondentId: order.borrowerId,
+      reason: '物品损坏',
+      description: report.description,
+      evidence: report.photos,
+      status: 'negotiating',
+      category: 'damage',
+      negotiation: negotiation,
+    });
+
+    notificationService.sendOrderStatusNotification(
+      order.borrowerId,
+      orderId,
+      'borrow',
+      this.borrowStatusText.disputed,
       item?.title || ''
     );
     
