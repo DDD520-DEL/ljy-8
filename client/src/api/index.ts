@@ -158,4 +158,13 @@ export const notificationApi = {
     request('/notifications/batch', { method: 'DELETE', data: { ids } }),
 };
 
+export const neighborhoodApi = {
+  getMembers: () => request('/neighborhood/members'),
+  getItems: (params?: { category?: string; keyword?: string }) =>
+    request('/neighborhood/items', { params }),
+  getSkills: (params?: { category?: string; keyword?: string }) =>
+    request('/neighborhood/skills', { params }),
+  getStats: () => request('/neighborhood/stats'),
+};
+
 export default api;

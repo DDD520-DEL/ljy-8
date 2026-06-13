@@ -10,6 +10,14 @@ export class UserRepository {
     return db.getAll<User>(this.collection);
   }
 
+  public findByNeighborhood(neighborhood: string, excludeUserId?: string): User[] {
+    let users = db.findMany<User>(this.collection, (user) => user.neighborhood === neighborhood);
+    if (excludeUserId) {
+      users = users.filter((user) => user.id !== excludeUserId);
+    }
+    return users.sort((a, b) => b.creditScore - a.creditScore);
+  }
+
   public findById(id: string): User | undefined {
     return db.getById<User>(this.collection, id);
   }

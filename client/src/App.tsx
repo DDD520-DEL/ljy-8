@@ -9,6 +9,7 @@ import PublishItem from './pages/PublishItem';
 import Skills from './pages/Skills';
 import SkillDetail from './pages/SkillDetail';
 import PublishSkill from './pages/PublishSkill';
+import Neighborhood from './pages/Neighborhood';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import Disputes from './pages/Disputes';
@@ -46,6 +47,14 @@ function App() {
           element={
             <PrivateRoute>
               <PublishSkill />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="neighborhood"
+          element={
+            <PrivateRoute>
+              <Neighborhood />
             </PrivateRoute>
           }
         />

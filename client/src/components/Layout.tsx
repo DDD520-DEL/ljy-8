@@ -84,6 +84,7 @@ function Layout() {
 
   const navItems = [
     { path: '/', label: '首页' },
+    { path: '/neighborhood', label: '邻里圈' },
     { path: '/items', label: '物品共享' },
     { path: '/skills', label: '技能交换' },
   ];
