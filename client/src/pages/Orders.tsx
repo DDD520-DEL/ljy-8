@@ -213,7 +213,7 @@ function Orders() {
                     {order.client.nickname} → {order.provider.nickname}
                   </p>
                   <p className="order-dates">
-                    {order.serviceDate?.replace('T', ' ')}
+                    {order.serviceDate} {order.serviceStartTime} - {order.serviceEndTime}
                   </p>
                 </div>
                 <div className="order-status">

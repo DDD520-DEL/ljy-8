@@ -64,6 +64,15 @@ export const skillApi = {
   createSkill: (data: any) => request('/skills', { method: 'POST', data }),
   updateSkill: (id: string, data: any) =>
     request(`/skills/${id}`, { method: 'PUT', data }),
+  getSchedules: (skillId: string) => request(`/skills/${skillId}/schedules`),
+  getAvailableSlots: (skillId: string, date?: string) =>
+    request(`/skills/${skillId}/available-slots`, { params: date ? { date } : {} }),
+  setSchedule: (skillId: string, data: { date: string; timeSlots: { startTime: string; endTime: string }[] }) =>
+    request(`/skills/${skillId}/schedule`, { method: 'POST', data }),
+  batchSetSchedule: (skillId: string, data: { schedules: { date: string; timeSlots: { startTime: string; endTime: string }[] }[] }) =>
+    request(`/skills/${skillId}/schedules/batch`, { method: 'POST', data }),
+  checkConflict: (skillId: string, date: string, startTime: string, endTime: string) =>
+    request(`/skills/${skillId}/check-conflict`, { params: { date, startTime, endTime } }),
 };
 
 export const orderApi = {

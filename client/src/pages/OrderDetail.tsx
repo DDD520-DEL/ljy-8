@@ -398,7 +398,7 @@ function OrderDetail({ type }: OrderDetailProps) {
                 <div className="info-row">
                   <span className="info-label">服务时间</span>
                   <span className="info-value">
-                    {(order as ServiceOrderWithDetails).serviceDate?.replace('T', ' ')}
+                    {(order as ServiceOrderWithDetails).serviceDate} {(order as ServiceOrderWithDetails).serviceStartTime} - {(order as ServiceOrderWithDetails).serviceEndTime}
                   </span>
                 </div>
                 <div className="info-row">

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { skillApi, orderApi, reviewApi } from '../api';
 import { useAuthStore } from '../store/authStore';
-import type { SkillWithProvider, ReviewWithUser } from '../types';
+import type { SkillWithProvider, ReviewWithUser, DailyAvailableSlots, TimeSlot } from '../types';
 
 function SkillDetail() {
   const { id } = useParams<{ id: string }>();
@@ -12,12 +12,16 @@ function SkillDetail() {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const [weeklySlots, setWeeklySlots] = useState<DailyAvailableSlots[]>([]);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [orderForm, setOrderForm] = useState({
-    serviceDate: '',
     address: '',
     message: '',
   });
   const [submitting, setSubmitting] = useState(false);
+
+  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
   useEffect(() => {
     if (id) {
@@ -31,8 +35,25 @@ function SkillDetail() {
     if (res.success) {
       setSkill(res.data);
       loadReviews(res.data.providerId);
+      loadAvailableSlots();
     }
     setLoading(false);
+  };
+
+  const loadAvailableSlots = async () => {
+    const res = await skillApi.getAvailableSlots(id!);
+    if (res.success) {
+      const slots = res.data as DailyAvailableSlots[];
+      setWeeklySlots(slots);
+      if (slots.length > 0) {
+        const firstAvailable = slots.find(s => s.availableSlots.length > 0);
+        if (firstAvailable) {
+          setSelectedDate(firstAvailable.date);
+        } else {
+          setSelectedDate(slots[0].date);
+        }
+      }
+    }
   };
 
   const loadReviews = async (userId: string) => {
@@ -48,11 +69,21 @@ function SkillDetail() {
       navigate('/login');
       return;
     }
+    if (!selectedSlot) {
+      alert('请选择服务时段');
+      return;
+    }
+    if (!orderForm.address.trim()) {
+      alert('请填写服务地址');
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await orderApi.createServiceOrder({
         skillId: id,
-        serviceDate: orderForm.serviceDate,
+        serviceDate: selectedDate,
+        startTime: selectedSlot.startTime,
+        endTime: selectedSlot.endTime,
         address: orderForm.address,
         message: orderForm.message,
       });
@@ -68,7 +99,26 @@ function SkillDetail() {
     }
   };
 
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(date);
+    setSelectedSlot(null);
+  };
+
+  const handleSlotSelect = (slot: TimeSlot) => {
+    setSelectedSlot(slot);
+  };
+
   const isProvider = user?.id === skill?.providerId;
+
+  const currentDaySlots = weeklySlots.find(s => s.date === selectedDate);
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const weekday = weekdays[date.getDay()];
+    return `${month}月${day}日 ${weekday}`;
+  };
 
   if (loading) {
     return <div className="container">加载中...</div>;
@@ -142,9 +192,11 @@ function SkillDetail() {
           )}
 
           {isProvider && (
-            <Link to="/skills/my" className="btn btn-secondary w-full">
-              管理我的技能
-            </Link>
+            <div className="provider-actions">
+              <Link to={`/skills/${skill.id}/schedule`} className="btn btn-secondary w-full">
+                📅 管理服务排期
+              </Link>
+            </div>
           )}
         </div>
       </div>
@@ -178,7 +230,7 @@ function SkillDetail() {
 
       {showOrderModal && (
         <div className="modal-overlay" onClick={() => setShowOrderModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>预约服务</h3>
               <button className="modal-close" onClick={() => setShowOrderModal(false)}>
@@ -186,16 +238,53 @@ function SkillDetail() {
               </button>
             </div>
             <form onSubmit={handleOrderSubmit}>
-              <div className="form-group">
-                <label className="form-label">服务时间</label>
-                <input
-                  type="datetime-local"
-                  className="form-input"
-                  value={orderForm.serviceDate}
-                  onChange={(e) => setOrderForm({ ...orderForm, serviceDate: e.target.value })}
-                  required
-                />
+              <div className="booking-section">
+                <h4 className="section-title">选择日期</h4>
+                <div className="date-selector">
+                  {weeklySlots.map((day) => {
+                    const date = new Date(day.date);
+                    const isToday = date.toDateString() === new Date().toDateString();
+                    const hasAvailable = day.availableSlots.length > 0;
+                    return (
+                      <button
+                        key={day.date}
+                        type="button"
+                        className={`date-item ${selectedDate === day.date ? 'selected' : ''} ${!hasAvailable ? 'disabled' : ''}`}
+                        onClick={() => hasAvailable && handleDateSelect(day.date)}
+                        disabled={!hasAvailable}
+                      >
+                        <span className="date-weekday">{weekdays[date.getDay()]}</span>
+                        <span className="date-day">{date.getDate()}</span>
+                        {isToday && <span className="date-today">今天</span>}
+                        {!hasAvailable && <span className="date-fully-booked">已满</span>}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
+              <div className="booking-section">
+                <h4 className="section-title">选择时段</h4>
+                {currentDaySlots && currentDaySlots.availableSlots.length > 0 ? (
+                  <div className="time-slots-grid">
+                    {currentDaySlots.availableSlots.map((slot) => (
+                      <button
+                        key={slot.id}
+                        type="button"
+                        className={`time-slot-btn ${selectedSlot?.id === slot.id ? 'selected' : ''}`}
+                        onClick={() => handleSlotSelect(slot)}
+                      >
+                        {slot.startTime} - {slot.endTime}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="no-slots">
+                    <p>该日期暂无可预约时段</p>
+                  </div>
+                )}
+              </div>
+
               <div className="form-group">
                 <label className="form-label">服务地址</label>
                 <input
@@ -228,7 +317,7 @@ function SkillDetail() {
                 >
                   取消
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                <button type="submit" className="btn btn-primary" disabled={submitting || !selectedSlot}>
                   {submitting ? '提交中...' : '提交预约'}
                 </button>
               </div>
@@ -460,12 +549,116 @@ function SkillDetail() {
           gap: 12px;
           margin-top: 24px;
         }
+        .modal-large {
+          max-width: 640px;
+        }
+        .booking-section {
+          margin-bottom: 24px;
+        }
+        .section-title {
+          font-size: 15px;
+          font-weight: 600;
+          margin-bottom: 12px;
+          color: #333;
+        }
+        .date-selector {
+          display: flex;
+          gap: 8px;
+          overflow-x: auto;
+          padding-bottom: 4px;
+        }
+        .date-item {
+          flex-shrink: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 10px 16px;
+          border: 1px solid #e8e8e8;
+          border-radius: 8px;
+          background: white;
+          cursor: pointer;
+          transition: all 0.2s;
+          min-width: 70px;
+        }
+        .date-item:hover:not(.disabled) {
+          border-color: #667eea;
+          background: #f5f7fa;
+        }
+        .date-item.selected {
+          border-color: #667eea;
+          background: #667eea;
+          color: white;
+        }
+        .date-item.disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          background: #f5f5f5;
+        }
+        .date-weekday {
+          font-size: 12px;
+          margin-bottom: 4px;
+        }
+        .date-day {
+          font-size: 18px;
+          font-weight: 600;
+        }
+        .date-today {
+          font-size: 10px;
+          margin-top: 2px;
+          color: #ff7a45;
+        }
+        .date-item.selected .date-today {
+          color: white;
+        }
+        .date-fully-booked {
+          font-size: 10px;
+          margin-top: 2px;
+          color: #ff4d4f;
+        }
+        .time-slots-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 10px;
+        }
+        .time-slot-btn {
+          padding: 10px 8px;
+          border: 1px solid #e8e8e8;
+          border-radius: 8px;
+          background: white;
+          font-size: 13px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .time-slot-btn:hover {
+          border-color: #667eea;
+          background: #f5f7fa;
+        }
+        .time-slot-btn.selected {
+          border-color: #667eea;
+          background: #667eea;
+          color: white;
+        }
+        .no-slots {
+          text-align: center;
+          padding: 30px;
+          color: #999;
+          background: #fafafa;
+          border-radius: 8px;
+        }
+        .provider-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
         @media (max-width: 768px) {
           .skill-detail {
             grid-template-columns: 1fr;
           }
           .skill-gallery {
             height: 250px;
+          }
+          .time-slots-grid {
+            grid-template-columns: repeat(3, 1fr);
           }
         }
       `}</style>

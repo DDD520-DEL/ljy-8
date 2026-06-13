@@ -17,6 +17,7 @@ import { timeCoinService } from './TimeCoinService';
 import { getCurrentTime, generateId } from '../utils/helpers';
 import { queueService } from './QueueService';
 import { notificationService } from './NotificationService';
+import { skillScheduleService } from './SkillScheduleService';
 
 export class OrderService {
   private borrowStatusText: Record<BorrowOrderStatus, string> = {
@@ -282,11 +283,26 @@ export class OrderService {
       throw new Error('时间币余额不足');
     }
 
+    const date = request.serviceDate.split('T')[0];
+    const startTime = request.startTime;
+    const endTime = request.endTime;
+
+    if (!startTime || !endTime) {
+      throw new Error('请选择服务时段');
+    }
+
+    const hasConflict = skillScheduleService.checkTimeSlotConflict(request.skillId, date, startTime, endTime);
+    if (hasConflict) {
+      throw new Error('该时段已被预约或不在可服务时段内，请选择其他时段');
+    }
+
     const order = orderRepository.createServiceOrder({
       skillId: request.skillId,
       clientId,
       providerId: skill.providerId,
-      serviceDate: request.serviceDate,
+      serviceDate: date,
+      serviceStartTime: startTime,
+      serviceEndTime: endTime,
       address: request.address,
       timeCoinPrice: skill.timeCoinPrice,
       message: request.message,

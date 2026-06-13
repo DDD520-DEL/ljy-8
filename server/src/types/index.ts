@@ -58,6 +58,24 @@ export interface Skill {
   viewCount: number;
 }
 
+export interface TimeSlot {
+  id: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface SkillSchedule {
+  id: string;
+  skillId: string;
+  date: string;
+  timeSlots: TimeSlot[];
+  createdAt: string;
+}
+
+export interface SkillScheduleWithAvailable extends SkillSchedule {
+  availableSlots: TimeSlot[];
+}
+
 export interface SkillWithProvider extends Skill {
   provider: PublicUser;
 }
@@ -132,6 +150,8 @@ export interface ServiceOrder {
   clientId: string;
   providerId: string;
   serviceDate: string;
+  serviceStartTime: string;
+  serviceEndTime: string;
   address: string;
   timeCoinPrice: number;
   status: ServiceOrderStatus;
@@ -214,8 +234,21 @@ export interface BorrowRequest {
 export interface ServiceOrderRequest {
   skillId: string;
   serviceDate: string;
+  startTime: string;
+  endTime: string;
   address: string;
   message?: string;
+}
+
+export interface SetScheduleRequest {
+  skillId: string;
+  date: string;
+  timeSlots: { startTime: string; endTime: string }[];
+}
+
+export interface BatchSetScheduleRequest {
+  skillId: string;
+  schedules: { date: string; timeSlots: { startTime: string; endTime: string }[] }[];
 }
 
 export type QueueStatus = 'waiting' | 'notified' | 'confirmed' | 'expired' | 'cancelled' | 'borrowed';

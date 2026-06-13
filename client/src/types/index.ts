@@ -43,6 +43,26 @@ export interface Skill {
   viewCount: number;
 }
 
+export interface TimeSlot {
+  id: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface SkillSchedule {
+  id: string;
+  skillId: string;
+  date: string;
+  timeSlots: TimeSlot[];
+  createdAt: string;
+}
+
+export interface DailyAvailableSlots {
+  date: string;
+  timeSlots: TimeSlot[];
+  availableSlots: TimeSlot[];
+}
+
 export interface SkillWithProvider extends Skill {
   provider: PublicUser;
 }
@@ -117,6 +137,8 @@ export interface ServiceOrder {
   clientId: string;
   providerId: string;
   serviceDate: string;
+  serviceStartTime: string;
+  serviceEndTime: string;
   address: string;
   timeCoinPrice: number;
   status: ServiceOrderStatus;

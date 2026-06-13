@@ -8,6 +8,7 @@ import ItemDetail from './pages/ItemDetail';
 import PublishItem from './pages/PublishItem';
 import Skills from './pages/Skills';
 import SkillDetail from './pages/SkillDetail';
+import SkillSchedule from './pages/SkillSchedule';
 import PublishSkill from './pages/PublishSkill';
 import Neighborhood from './pages/Neighborhood';
 import Orders from './pages/Orders';
@@ -42,6 +43,14 @@ function App() {
         />
         <Route path="skills" element={<Skills />} />
         <Route path="skills/:id" element={<SkillDetail />} />
+        <Route
+          path="skills/:id/schedule"
+          element={
+            <PrivateRoute>
+              <SkillSchedule />
+            </PrivateRoute>
+          }
+        />
         <Route
           path="publish/skill"
           element={
