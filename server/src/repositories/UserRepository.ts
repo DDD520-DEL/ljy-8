@@ -64,6 +64,7 @@ export class UserRepository {
       creditScore: user.creditScore,
       creditLevel: user.creditLevel,
       neighborhood: user.neighborhood,
+      role: user.role,
       createdAt: user.createdAt,
     };
   }

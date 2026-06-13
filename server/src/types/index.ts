@@ -20,6 +20,7 @@ export interface PublicUser {
   creditScore: number;
   creditLevel: string;
   neighborhood: string;
+  role: 'user' | 'admin';
   timeCoins?: number;
   createdAt: string;
 }

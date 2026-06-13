@@ -187,4 +187,8 @@ export const transactionApi = {
     request('/transactions/time-coin', { params: type ? { type } : {} }),
 };
 
+export const statsApi = {
+  getDashboardStats: () => request('/stats/dashboard'),
+};
+
 export default api;

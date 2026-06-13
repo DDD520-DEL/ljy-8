@@ -17,6 +17,7 @@ import Disputes from './pages/Disputes';
 import DisputeDetail from './pages/DisputeDetail';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
+import AdminDashboard from './pages/AdminDashboard';
 import { useAuthStore } from './store/authStore';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -120,6 +121,14 @@ function App() {
           element={
             <PrivateRoute>
               <Notifications />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="admin/dashboard"
+          element={
+            <PrivateRoute>
+              <AdminDashboard />
             </PrivateRoute>
           }
         />

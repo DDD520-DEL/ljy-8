@@ -5,6 +5,7 @@ export interface PublicUser {
   creditScore: number;
   creditLevel: string;
   neighborhood: string;
+  role?: 'user' | 'admin';
   timeCoins?: number;
   createdAt: string;
 }
@@ -344,4 +345,38 @@ export interface Notification {
   relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue';
   read: boolean;
   createdAt: string;
+}
+
+export interface DashboardStats {
+  totalUsers: number;
+  totalItems: number;
+  availableItems: number;
+  totalSkills: number;
+  activeSkills: number;
+  borrowOrderStats: Record<string, number>;
+  serviceOrderStats: Record<string, number>;
+  disputeStats: {
+    total: number;
+    resolved: number;
+    pending: number;
+    resolutionRate: number;
+  };
+  monthlyTimeCoinFlow: {
+    income: number;
+    expenditure: number;
+    total: number;
+  };
+  recentMonthlyTrend: {
+    month: string;
+    income: number;
+    expenditure: number;
+  }[];
+  userGrowth: {
+    month: string;
+    count: number;
+  }[];
+  categoryStats: {
+    itemCategories: Record<string, number>;
+    skillCategories: Record<string, number>;
+  };
 }

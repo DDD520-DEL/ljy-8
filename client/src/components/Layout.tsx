@@ -111,6 +111,11 @@ function Layout() {
           <div className="header-actions">
             {isAuthenticated ? (
               <div className="user-menu">
+                {user?.role === 'admin' && (
+                  <Link to="/admin/dashboard" className="nav-link">
+                    📊 数据看板
+                  </Link>
+                )}
                 <Link to="/orders" className="nav-link">
                   我的订单
                 </Link>
