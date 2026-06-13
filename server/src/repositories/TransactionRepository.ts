@@ -16,9 +16,9 @@ export class TransactionRepository {
   }
 
   public findDepositTransactionsByUserId(userId: string, type?: DepositTransactionType): DepositTransaction[] {
-    const transactions = db.findMany<DepositTransaction>(this.depositCollection, (t) => t.userId === userId);
+    let transactions = db.findMany<DepositTransaction>(this.depositCollection, (t) => t.userId === userId);
     if (type) {
-      return transactions.filter(t => t.type === type);
+      transactions = transactions.filter(t => t.type === type);
     }
     return transactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
@@ -33,9 +33,9 @@ export class TransactionRepository {
   }
 
   public findTimeCoinTransactionsByUserId(userId: string, type?: TimeCoinTransactionType): TimeCoinTransaction[] {
-    const transactions = db.findMany<TimeCoinTransaction>(this.timeCoinCollection, (t) => t.userId === userId);
+    let transactions = db.findMany<TimeCoinTransaction>(this.timeCoinCollection, (t) => t.userId === userId);
     if (type) {
-      return transactions.filter(t => t.type === type);
+      transactions = transactions.filter(t => t.type === type);
     }
     return transactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
