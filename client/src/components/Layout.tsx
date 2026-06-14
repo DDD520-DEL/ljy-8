@@ -105,6 +105,8 @@ function Layout() {
       navigate(`/donations/${notification.relatedId}`);
     } else if (notification.relatedType === 'activity') {
       navigate(`/activities/${notification.relatedId}`);
+    } else if (notification.relatedType === 'feedback') {
+      navigate('/my-feedbacks');
     } else if (notification.type.startsWith('demand')) {
       navigate('/my-demands');
     } else {

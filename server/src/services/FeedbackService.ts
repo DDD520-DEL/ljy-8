@@ -160,6 +160,7 @@ export class FeedbackService {
       title: `您的反馈已${this.statusText[status]}`,
       message: `您提交的「${feedback.title}」${this.statusText[status]}${adminReply ? '，管理员回复：' + adminReply : ''}`,
       relatedId: feedback.id,
+      relatedType: 'feedback',
     });
 
     return feedbackRepository.toFeedbackWithUser(updated);

@@ -44,7 +44,7 @@ export class NotificationService {
     title: string;
     message: string;
     relatedId?: string;
-    relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue' | 'skill' | 'activity';
+    relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue' | 'skill' | 'activity' | 'feedback';
   }): Notification {
     return notificationRepository.create(data);
   }

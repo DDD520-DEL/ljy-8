@@ -434,7 +434,7 @@ export interface Notification {
   title: string;
   message: string;
   relatedId?: string;
-  relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue' | 'skill' | 'donation' | 'activity';
+  relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue' | 'skill' | 'donation' | 'activity' | 'feedback';
   read: boolean;
   createdAt: string;
 }

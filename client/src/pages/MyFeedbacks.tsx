@@ -58,13 +58,23 @@ function MyFeedbacks() {
   };
 
   const getTimelineSteps = (feedback: FeedbackWithUser) => {
+    const isFinal = feedback.status === 'resolved' || feedback.status === 'rejected';
+    let finalLabel: string;
+    let finalIcon: string;
+    if (feedback.status === 'resolved') {
+      finalLabel = '已解决';
+      finalIcon = '✅';
+    } else if (feedback.status === 'rejected') {
+      finalLabel = '已拒绝';
+      finalIcon = '❌';
+    } else {
+      finalLabel = '待完成';
+      finalIcon = '🏁';
+    }
     const steps = [
       { status: 'pending', label: '已提交', icon: '📤', done: true },
       { status: 'processing', label: '处理中', icon: '🔄', done: feedback.status !== 'pending' },
-      { status: feedback.status === 'resolved' ? 'resolved' : 'rejected', 
-        label: feedback.status === 'resolved' ? '已解决' : '已拒绝', 
-        icon: feedback.status === 'resolved' ? '✅' : '❌', 
-        done: feedback.status === 'resolved' || feedback.status === 'rejected' },
+      { status: isFinal ? feedback.status : 'pending', label: finalLabel, icon: finalIcon, done: isFinal },
     ];
     return steps;
   };
