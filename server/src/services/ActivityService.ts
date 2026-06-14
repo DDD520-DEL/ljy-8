@@ -412,11 +412,46 @@ export class ActivityService {
       if (activity.status === 'recruiting' || activity.status === 'full') {
         if (new Date(activity.startTime) <= now && new Date(activity.endTime) > now) {
           activityRepository.updateActivityStatus(activity.id, 'ongoing');
+          const registrations = activityRepository.findRegistrationsByActivityId(activity.id);
+          registrations.forEach(reg => {
+            notificationService.sendActivityStatusNotification(
+              reg.userId,
+              activity.id,
+              activity.title,
+              'ongoing'
+            );
+          });
         } else if (new Date(activity.endTime) <= now) {
           activityRepository.updateActivityStatus(activity.id, 'completed');
+          const registrations = activityRepository.findRegistrationsByActivityId(activity.id);
+          registrations.forEach(reg => {
+            activityRepository.updateRegistrationStatus(reg.id, 'attended');
+            notificationService.sendActivityCompletedNotification(
+              reg.userId,
+              activity.id,
+              activity.title
+            );
+          });
+          creditService.rewardCredit(activity.organizerId, 5, '成功组织邻里活动');
+          registrations.forEach(reg => {
+            creditService.rewardCredit(reg.userId, 3, '参与邻里活动');
+          });
         }
       } else if (activity.status === 'ongoing' && new Date(activity.endTime) <= now) {
         activityRepository.updateActivityStatus(activity.id, 'completed');
+        const registrations = activityRepository.findRegistrationsByActivityId(activity.id);
+        registrations.forEach(reg => {
+          activityRepository.updateRegistrationStatus(reg.id, 'attended');
+          notificationService.sendActivityCompletedNotification(
+            reg.userId,
+            activity.id,
+            activity.title
+          );
+        });
+        creditService.rewardCredit(activity.organizerId, 5, '成功组织邻里活动');
+        registrations.forEach(reg => {
+          creditService.rewardCredit(reg.userId, 3, '参与邻里活动');
+        });
       }
     });
   }

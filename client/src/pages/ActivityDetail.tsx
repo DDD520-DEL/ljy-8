@@ -131,8 +131,8 @@ function ActivityDetail() {
     }
   };
 
-  const handleCancelActivity = async () => {
-    if (!confirm('确定要取消活动吗？所有报名用户将收到通知。')) return;
+  const handleCancelActivity = async (e: React.FormEvent) => {
+    e.preventDefault();
     setSubmitting(true);
     try {
       const res = await activityApi.cancelActivity(id!, cancelReason);
