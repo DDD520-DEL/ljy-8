@@ -709,3 +709,18 @@ export interface DemandPaginationParams {
   page?: number;
   pageSize?: number;
 }
+
+export type LeaderboardType = 'timeCoin' | 'credit' | 'sharing';
+export type LeaderboardPeriod = 'all' | 'month';
+
+export interface LeaderboardEntry {
+  rank: number;
+  user: PublicUser;
+  value: number;
+}
+
+export interface LeaderboardResult {
+  type: LeaderboardType;
+  period: LeaderboardPeriod;
+  entries: LeaderboardEntry[];
+}

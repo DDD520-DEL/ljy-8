@@ -202,6 +202,8 @@ export const transactionApi = {
 
 export const statsApi = {
   getDashboardStats: () => request('/stats/dashboard'),
+  getLeaderboard: (type: string, period: string) =>
+    request('/stats/leaderboard', { params: { type, period } }),
 };
 
 export const favoriteApi = {

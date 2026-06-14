@@ -103,6 +103,7 @@ function Layout() {
   const navItems = [
     { path: '/', label: '首页' },
     { path: '/announcements', label: '社区公告' },
+    { path: '/leaderboard', label: '排行榜' },
     { path: '/neighborhood', label: '邻里圈' },
     { path: '/items', label: '物品共享' },
     { path: '/donations', label: '免费捐赠' },

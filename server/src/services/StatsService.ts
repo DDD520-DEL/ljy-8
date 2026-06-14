@@ -5,6 +5,7 @@ import { orderRepository } from '../repositories/OrderRepository';
 import { disputeRepository } from '../repositories/DisputeRepository';
 import { transactionRepository } from '../repositories/TransactionRepository';
 import { db } from '../utils/db';
+import { LeaderboardType, LeaderboardPeriod, LeaderboardEntry, LeaderboardResult, PublicUser } from '../types';
 
 export interface DashboardStats {
   totalUsers: number;
@@ -169,6 +170,130 @@ export class StatsService {
     }
 
     return months;
+  }
+
+  public getLeaderboard(type: LeaderboardType, period: LeaderboardPeriod): LeaderboardResult {
+    let entries: LeaderboardEntry[] = [];
+
+    switch (type) {
+      case 'timeCoin':
+        entries = this.getTimeCoinLeaderboard(period);
+        break;
+      case 'credit':
+        entries = this.getCreditLeaderboard(period);
+        break;
+      case 'sharing':
+        entries = this.getSharingLeaderboard(period);
+        break;
+    }
+
+    return {
+      type,
+      period,
+      entries,
+    };
+  }
+
+  private getTimeCoinLeaderboard(period: LeaderboardPeriod): LeaderboardEntry[] {
+    const users = userRepository.findAll();
+
+    if (period === 'all') {
+      const sorted = [...users].sort((a, b) => b.timeCoins - a.timeCoins);
+      return sorted.slice(0, 50).map((user, index) => ({
+        rank: index + 1,
+        user: userRepository.toPublicUser(user),
+        value: user.timeCoins,
+      }));
+    } else {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const timeCoinTransactions = db.getAll<any>('timeCoinTransactions') || [];
+
+      const userCoinChanges: Record<string, number> = {};
+
+      timeCoinTransactions
+        .filter((t) => new Date(t.createdAt) >= monthStart)
+        .forEach((t) => {
+          if (!userCoinChanges[t.userId]) {
+            userCoinChanges[t.userId] = 0;
+          }
+          if (t.type === 'income') {
+            userCoinChanges[t.userId] += t.amount;
+          }
+        });
+
+      const entries = Object.entries(userCoinChanges)
+        .map(([userId, value]) => {
+          const user = userRepository.findById(userId);
+          return user ? { user, value } : null;
+        })
+        .filter((item): item is { user: any; value: number } => item !== null)
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 50)
+        .map((item, index) => ({
+          rank: index + 1,
+          user: userRepository.toPublicUser(item.user),
+          value: item.value,
+        }));
+
+      return entries;
+    }
+  }
+
+  private getCreditLeaderboard(period: LeaderboardPeriod): LeaderboardEntry[] {
+    const users = userRepository.findAll();
+
+    if (period === 'all') {
+      const sorted = [...users].sort((a, b) => b.creditScore - a.creditScore);
+      return sorted.slice(0, 50).map((user, index) => ({
+        rank: index + 1,
+        user: userRepository.toPublicUser(user),
+        value: user.creditScore,
+      }));
+    } else {
+      const sorted = [...users].sort((a, b) => b.creditScore - a.creditScore);
+      return sorted.slice(0, 50).map((user, index) => ({
+        rank: index + 1,
+        user: userRepository.toPublicUser(user),
+        value: user.creditScore,
+      }));
+    }
+  }
+
+  private getSharingLeaderboard(period: LeaderboardPeriod): LeaderboardEntry[] {
+    const borrowOrders = orderRepository.findAllBorrowOrders();
+    const validStatuses = ['borrowing', 'returned', 'disputed'];
+
+    let filteredOrders = borrowOrders.filter((order) => validStatuses.includes(order.status));
+
+    if (period === 'month') {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      filteredOrders = filteredOrders.filter(
+        (order) => new Date(order.createdAt) >= monthStart
+      );
+    }
+
+    const lendCountMap: Record<string, number> = {};
+    filteredOrders.forEach((order) => {
+      lendCountMap[order.lenderId] = (lendCountMap[order.lenderId] || 0) + 1;
+    });
+
+    const entries = Object.entries(lendCountMap)
+      .map(([userId, value]) => {
+        const user = userRepository.findById(userId);
+        return user ? { user, value } : null;
+      })
+      .filter((item): item is { user: any; value: number } => item !== null)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 50)
+      .map((item, index) => ({
+        rank: index + 1,
+        user: userRepository.toPublicUser(item.user),
+        value: item.value,
+      }));
+
+    return entries;
   }
 }
 

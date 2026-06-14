@@ -33,6 +33,7 @@ import Demands from './pages/Demands';
 import DemandDetail from './pages/DemandDetail';
 import PublishDemand from './pages/PublishDemand';
 import MyDemands from './pages/MyDemands';
+import Leaderboard from './pages/Leaderboard';
 import { useAuthStore } from './store/authStore';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -47,6 +48,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
+        <Route path="leaderboard" element={<Leaderboard />} />
         <Route path="shop" element={<Shop />} />
         <Route
           path="my-exchanges"
