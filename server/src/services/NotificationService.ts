@@ -160,6 +160,86 @@ export class NotificationService {
       relatedType: 'item',
     });
   }
+
+  public sendDemandStatusNotification(
+    userId: string,
+    demandId: string,
+    status: string,
+    demandTitle: string
+  ): Notification {
+    const statusText: Record<string, string> = {
+      open: '接受响应',
+      responding: '有响应中',
+      confirmed: '已确认',
+      in_progress: '进行中',
+      completed: '已完成',
+      cancelled: '已取消',
+    };
+
+    const title = '需求状态更新';
+    const message = `需求「${demandTitle}」状态已更新为：${statusText[status] || status}`;
+    return this.sendNotification({
+      userId,
+      type: 'demand_status',
+      title,
+      message,
+      relatedId: demandId,
+      relatedType: 'item',
+    });
+  }
+
+  public sendDemandNewResponseNotification(
+    userId: string,
+    demandId: string,
+    demandTitle: string
+  ): Notification {
+    const title = '需求收到新响应';
+    const message = `您发布的需求「${demandTitle}」收到了新的响应，请查看`;
+    return this.sendNotification({
+      userId,
+      type: 'demand_new_response',
+      title,
+      message,
+      relatedId: demandId,
+      relatedType: 'item',
+    });
+  }
+
+  public sendDemandResponseAcceptedNotification(
+    userId: string,
+    demandId: string,
+    demandTitle: string
+  ): Notification {
+    const title = '您的响应被确认';
+    const message = `您对需求「${demandTitle}」的响应已被发布者确认，请尽快开始服务`;
+    return this.sendNotification({
+      userId,
+      type: 'demand_response_accepted',
+      title,
+      message,
+      relatedId: demandId,
+      relatedType: 'item',
+    });
+  }
+
+  public sendDemandOrderCompletedNotification(
+    userId: string,
+    orderId: string,
+    coinChange: number,
+    demandTitle: string
+  ): Notification {
+    const title = '需求订单已完成';
+    const action = coinChange > 0 ? '获得' : '支付';
+    const message = `需求「${demandTitle}」已完成，您${action}了 ${Math.abs(coinChange)} 时间币`;
+    return this.sendNotification({
+      userId,
+      type: 'demand_order_completed',
+      title,
+      message,
+      relatedId: orderId,
+      relatedType: 'item',
+    });
+  }
 }
 
 export const notificationService = new NotificationService();

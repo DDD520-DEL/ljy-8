@@ -62,6 +62,14 @@ function Layout() {
         return '📢';
       case 'donation_status':
         return '🎁';
+      case 'demand_status':
+        return '📝';
+      case 'demand_new_response':
+        return '💬';
+      case 'demand_response_accepted':
+        return '✅';
+      case 'demand_order_completed':
+        return '🎉';
       default:
         return '📧';
     }
@@ -78,9 +86,15 @@ function Layout() {
     } else if (notification.relatedType === 'dispute') {
       navigate(`/disputes/${notification.relatedId}`);
     } else if (notification.relatedType === 'item') {
-      navigate(`/items/${notification.relatedId}`);
+      if (notification.type.startsWith('demand')) {
+        navigate(`/demands/${notification.relatedId}`);
+      } else {
+        navigate(`/items/${notification.relatedId}`);
+      }
     } else if (notification.relatedType === 'donation') {
       navigate(`/donations/${notification.relatedId}`);
+    } else if (notification.type.startsWith('demand')) {
+      navigate('/my-demands');
     } else {
       navigate('/notifications');
     }
@@ -93,6 +107,7 @@ function Layout() {
     { path: '/items', label: '物品共享' },
     { path: '/donations', label: '免费捐赠' },
     { path: '/skills', label: '技能交换' },
+    { path: '/demands', label: '需求广场' },
     { path: '/shop', label: '兑换商城' },
   ];
 
@@ -139,6 +154,9 @@ function Layout() {
                 </Link>
                 <Link to="/my-donations" className="nav-link">
                   🎀 我的捐赠
+                </Link>
+                <Link to="/my-demands" className="nav-link">
+                  📝 我的需求
                 </Link>
                 <Link to="/disputes" className="nav-link">
                   纠纷中心

@@ -28,6 +28,10 @@ import Donations from './pages/Donations';
 import DonationDetail from './pages/DonationDetail';
 import PublishDonation from './pages/PublishDonation';
 import MyDonations from './pages/MyDonations';
+import Demands from './pages/Demands';
+import DemandDetail from './pages/DemandDetail';
+import PublishDemand from './pages/PublishDemand';
+import MyDemands from './pages/MyDemands';
 import { useAuthStore } from './store/authStore';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -94,6 +98,24 @@ function App() {
           element={
             <PrivateRoute>
               <MyDonations />
+            </PrivateRoute>
+          }
+        />
+        <Route path="demands" element={<Demands />} />
+        <Route path="demands/:id" element={<DemandDetail />} />
+        <Route
+          path="publish/demand"
+          element={
+            <PrivateRoute>
+              <PublishDemand />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="my-demands"
+          element={
+            <PrivateRoute>
+              <MyDemands />
             </PrivateRoute>
           }
         />

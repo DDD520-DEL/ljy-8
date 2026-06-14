@@ -322,6 +322,10 @@ export type NotificationType =
   | 'queue_cancelled'
   | 'new_skill_from_followed'
   | 'donation_status'
+  | 'demand_status'
+  | 'demand_new_response'
+  | 'demand_response_accepted'
+  | 'demand_order_completed'
   | 'system';
 
 export interface Notification {
@@ -598,6 +602,126 @@ export interface DonationSortParams {
 }
 
 export interface DonationPaginationParams {
+  page?: number;
+  pageSize?: number;
+}
+
+export type DemandType = 'item' | 'service';
+export type DemandStatus = 'open' | 'responding' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+export type DemandResponseStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+
+export interface Demand {
+  id: string;
+  requesterId: string;
+  title: string;
+  description: string;
+  type: DemandType;
+  category: string;
+  images: string[];
+  timeCoinReward: number;
+  urgency: 'normal' | 'urgent' | 'very_urgent';
+  contactPhone?: string;
+  contactAddress?: string;
+  validUntil?: string;
+  status: DemandStatus;
+  acceptedResponseId?: string;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DemandWithDetails extends Demand {
+  requester: PublicUser;
+  responses: DemandResponseWithDetails[];
+  acceptedResponse?: DemandResponseWithDetails;
+}
+
+export interface DemandResponse {
+  id: string;
+  demandId: string;
+  responderId: string;
+  message: string;
+  estimatedTime?: string;
+  priceOffer?: number;
+  status: DemandResponseStatus;
+  createdAt: string;
+}
+
+export interface DemandResponseWithDetails extends DemandResponse {
+  responder: PublicUser;
+}
+
+export interface DemandOrder {
+  id: string;
+  demandId: string;
+  requesterId: string;
+  responderId: string;
+  responseId: string;
+  timeCoinReward: number;
+  status: DemandStatus;
+  startTime?: string;
+  completedAt?: string;
+  timeline: TimelineEvent[];
+  createdAt: string;
+}
+
+export interface DemandOrderWithDetails extends DemandOrder {
+  demand: DemandWithDetails;
+  requester: PublicUser;
+  responder: PublicUser;
+}
+
+export interface CreateDemandRequest {
+  title: string;
+  description: string;
+  type: DemandType;
+  category: string;
+  images?: string[];
+  timeCoinReward: number;
+  urgency?: 'normal' | 'urgent' | 'very_urgent';
+  contactPhone?: string;
+  contactAddress?: string;
+  validUntil?: string;
+}
+
+export interface UpdateDemandRequest {
+  title?: string;
+  description?: string;
+  type?: DemandType;
+  category?: string;
+  images?: string[];
+  timeCoinReward?: number;
+  urgency?: 'normal' | 'urgent' | 'very_urgent';
+  contactPhone?: string;
+  contactAddress?: string;
+  validUntil?: string;
+}
+
+export interface CreateDemandResponseRequest {
+  message: string;
+  estimatedTime?: string;
+  priceOffer?: number;
+}
+
+export interface AcceptDemandResponseRequest {
+  responseId: string;
+}
+
+export interface DemandFilterParams {
+  type?: DemandType;
+  category?: string;
+  keyword?: string;
+  userNeighborhood?: string;
+  status?: DemandStatus;
+  urgency?: string;
+}
+
+export interface DemandSortParams {
+  sortBy?: 'createdAt' | 'timeCoinReward' | 'viewCount' | 'urgency';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface DemandPaginationParams {
   page?: number;
   pageSize?: number;
 }

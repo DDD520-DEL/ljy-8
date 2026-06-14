@@ -447,6 +447,88 @@ const sampleExchangeItems = [
   },
 ];
 
+const sampleDemands = [
+  {
+    id: 'demand-1',
+    requesterId: 'user-zhang',
+    title: '急需一个冲击钻',
+    description: '家里要装几幅挂画和置物架，需要冲击钻打孔，使用时间大概2小时，可以上门自取或约时间使用。',
+    type: 'item' as const,
+    category: '工具',
+    images: [] as string[],
+    timeCoinReward: 3,
+    urgency: 'urgent' as const,
+    contactPhone: '13800000001',
+    contactAddress: '阳光花园小区3号楼502',
+    status: 'open' as const,
+    viewCount: 28,
+    createdAt: getCurrentTime(),
+    updatedAt: getCurrentTime(),
+  },
+  {
+    id: 'demand-2',
+    requesterId: 'user-li',
+    title: '求帮忙搬家',
+    description: '周六上午需要帮忙搬家，东西不多，主要是几个纸箱和家具，从5楼搬到同小区另一栋3楼，有电梯。大概需要2-3人，预计2小时完成。',
+    type: 'service' as const,
+    category: '搬运服务',
+    images: [] as string[],
+    timeCoinReward: 8,
+    urgency: 'normal' as const,
+    contactPhone: '13800000002',
+    contactAddress: '阳光花园小区2号楼',
+    status: 'open' as const,
+    viewCount: 45,
+    createdAt: getCurrentTime(),
+    updatedAt: getCurrentTime(),
+  },
+  {
+    id: 'demand-3',
+    requesterId: 'user-chen',
+    title: '借用电饭煲',
+    description: '家里电饭煲坏了，新的还没到，借用2-3天，用完会清洗干净归还。',
+    type: 'item' as const,
+    category: '家电',
+    images: [] as string[],
+    timeCoinReward: 2,
+    urgency: 'normal' as const,
+    contactPhone: '13800000004',
+    contactAddress: '阳光花园小区1号楼301',
+    status: 'responding' as const,
+    viewCount: 15,
+    createdAt: getCurrentTime(),
+    updatedAt: getCurrentTime(),
+  },
+  {
+    id: 'demand-4',
+    requesterId: 'user-wang',
+    title: '需要电脑维修',
+    description: '笔记本电脑开不了机，可能是系统问题，希望有懂电脑的邻居帮忙看看，感谢！',
+    type: 'service' as const,
+    category: '维修服务',
+    images: [] as string[],
+    timeCoinReward: 5,
+    urgency: 'very_urgent' as const,
+    contactPhone: '13800000003',
+    contactAddress: '阳光花园小区4号楼201',
+    status: 'open' as const,
+    viewCount: 62,
+    createdAt: getCurrentTime(),
+    updatedAt: getCurrentTime(),
+  },
+];
+
+const sampleDemandResponses = [
+  {
+    id: 'demand-response-1',
+    demandId: 'demand-3',
+    responderId: 'user-zhang',
+    message: '我家里有个闲置的电饭煲，可以借你用，明天给你送过去。',
+    status: 'pending' as const,
+    createdAt: getCurrentTime(),
+  },
+];
+
 export function initializeSampleData() {
   const collections = {
     users: sampleUsers,
@@ -454,6 +536,9 @@ export function initializeSampleData() {
     skills: sampleSkills,
     exchangeItems: sampleExchangeItems,
     announcements: sampleAnnouncements,
+    demands: sampleDemands,
+    demandResponses: sampleDemandResponses,
+    demandOrders: [],
     borrowOrders: [],
     serviceOrders: [],
     exchangeRecords: [],
@@ -473,6 +558,7 @@ export function initializeSampleData() {
   console.log('   - 技能：' + sampleSkills.length + ' 个');
   console.log('   - 兑换商品：' + sampleExchangeItems.length + ' 个');
   console.log('   - 社区公告：' + sampleAnnouncements.length + ' 条');
+  console.log('   - 需求广场：' + sampleDemands.length + ' 条');
   console.log('');
   console.log('📋 测试账号：');
   console.log('   管理员：admin@example.com / admin123');

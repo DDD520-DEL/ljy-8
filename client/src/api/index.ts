@@ -304,4 +304,40 @@ export const donationApi = {
     request(`/donations/${id}/cancel-application`, { method: 'PUT' }),
 };
 
+export const demandApi = {
+  getDemands: (params?: {
+    type?: string;
+    category?: string;
+    keyword?: string;
+    userNeighborhood?: string;
+    status?: string;
+    urgency?: string;
+    sortBy?: string;
+    sortOrder?: string;
+    page?: number;
+    pageSize?: number;
+  }) => request('/demands', { params }),
+  getDemandById: (id: string) => request(`/demands/${id}`),
+  getMyDemands: () => request('/demands/my'),
+  getMyRespondedDemands: () => request('/demands/my/responded'),
+  getMyOrders: (role?: 'requester' | 'responder') =>
+    request('/demands/my/orders', { params: role ? { role } : {} }),
+  getOrderById: (id: string) => request(`/demands/orders/${id}`),
+  createDemand: (data: any) => request('/demands', { method: 'POST', data }),
+  updateDemand: (id: string, data: any) =>
+    request(`/demands/${id}`, { method: 'PUT', data }),
+  cancelDemand: (id: string, reason?: string) =>
+    request(`/demands/${id}/cancel`, { method: 'PUT', data: { reason } }),
+  respondToDemand: (id: string, data: { message: string; estimatedTime?: string; priceOffer?: number }) =>
+    request(`/demands/${id}/respond`, { method: 'POST', data }),
+  withdrawResponse: (responseId: string) =>
+    request(`/demands/responses/${responseId}/withdraw`, { method: 'PUT' }),
+  acceptResponse: (id: string, responseId: string) =>
+    request(`/demands/${id}/accept`, { method: 'PUT', data: { responseId } }),
+  startOrder: (id: string) =>
+    request(`/demands/orders/${id}/start`, { method: 'PUT' }),
+  completeOrder: (id: string) =>
+    request(`/demands/orders/${id}/complete`, { method: 'PUT' }),
+};
+
 export default api;
