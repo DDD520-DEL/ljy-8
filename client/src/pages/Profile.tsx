@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { authApi, itemApi, skillApi, reviewApi, queueApi, transactionApi, favoriteApi, followApi, verificationApi } from '../api';
+import { authApi, itemApi, skillApi, reviewApi, queueApi, transactionApi, favoriteApi, followApi, verificationApi, greetingCardApi } from '../api';
 import type { UserVerification } from '../types';
 import type {
   ItemWithOwner,
@@ -15,6 +15,8 @@ import type {
   FavoriteItemWithDetail,
   FollowWithDetail,
   FollowerWithDetail,
+  GreetingCardWithDetails,
+  GreetingCardStats,
 } from '../types';
 
 function Profile() {
@@ -51,6 +53,9 @@ function Profile() {
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [verifyForm, setVerifyForm] = useState({ realName: '', houseNumber: '' });
   const [submittingVerify, setSubmittingVerify] = useState(false);
+  const [receivedCards, setReceivedCards] = useState<GreetingCardWithDetails[]>([]);
+  const [sentCards, setSentCards] = useState<GreetingCardWithDetails[]>([]);
+  const [cardStats, setCardStats] = useState<GreetingCardStats | null>(null);
 
   useEffect(() => {
     if (activeTab === 'items') {
@@ -77,6 +82,10 @@ function Profile() {
       loadDepositTransactions();
     } else if (activeTab === 'timecoin') {
       loadTimeCoinTransactions();
+    } else if (activeTab === 'greeting-cards-received') {
+      loadReceivedCards();
+    } else if (activeTab === 'greeting-cards-sent') {
+      loadSentCards();
     }
   }, [activeTab]);
 
@@ -173,6 +182,24 @@ function Profile() {
     const res = await verificationApi.getMyVerification();
     if (res.success) {
       setMyVerification(res.data || null);
+    }
+  };
+
+  const loadReceivedCards = async () => {
+    const res = await greetingCardApi.getReceivedCards();
+    if (res.success) {
+      setReceivedCards(res.data || []);
+    }
+    const statsRes = await greetingCardApi.getStats();
+    if (statsRes.success) {
+      setCardStats(statsRes.data || null);
+    }
+  };
+
+  const loadSentCards = async () => {
+    const res = await greetingCardApi.getSentCards();
+    if (res.success) {
+      setSentCards(res.data || []);
     }
   };
 
@@ -292,6 +319,7 @@ function Profile() {
       queue_turn: { icon: '🔔', color: '#fa8c16' },
       queue_expired: { icon: '⏰', color: '#999' },
       queue_cancelled: { icon: '❌', color: '#999' },
+      greeting_card_received: { icon: '💌', color: '#eb2f96' },
     };
     return map[type] || { icon: '📧', color: '#667eea' };
   };
@@ -444,6 +472,18 @@ function Profile() {
           onClick={() => setActiveTab('timecoin')}
         >
           时间币明细
+        </button>
+        <button
+          className={`tab ${activeTab === 'greeting-cards-received' ? 'active' : ''}`}
+          onClick={() => setActiveTab('greeting-cards-received')}
+        >
+          💌 收到的卡片
+        </button>
+        <button
+          className={`tab ${activeTab === 'greeting-cards-sent' ? 'active' : ''}`}
+          onClick={() => setActiveTab('greeting-cards-sent')}
+        >
+          💌 发出的卡片
         </button>
       </div>
 
@@ -1055,6 +1095,152 @@ function Profile() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'greeting-cards-received' && (
+          <div className="list-section">
+            <div className="section-header">
+              <h3>💌 收到的感谢卡片</h3>
+              {cardStats && (
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                  <span style={{ color: '#666', fontSize: '14px' }}>
+                    共收到 <strong style={{ color: '#667eea' }}>{cardStats.received}</strong> 张卡片
+                  </span>
+                </div>
+              )}
+            </div>
+            {receivedCards.length === 0 ? (
+              <div className="empty-list">
+                <p>暂时还没有收到感谢卡片</p>
+                <small style={{ color: '#999' }}>完成订单后，对方可以给您发送感谢卡片</small>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                {receivedCards.map((card) => (
+                  <div key={card.id} className="card" style={{
+                    background: `linear-gradient(135deg, ${card.templateBgColor} 0%, ${card.templateBgColor}dd 100%)`,
+                    color: card.templateTextColor,
+                    borderRadius: '16px',
+                    padding: '24px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}>
+                    <div style={{ fontSize: '48px', textAlign: 'center', marginBottom: '12px' }}>
+                      {card.templateEmoji}
+                    </div>
+                    <h4 style={{ textAlign: 'center', margin: '0 0 8px', fontSize: '18px' }}>
+                      {card.templateTitle}
+                    </h4>
+                    <p style={{ textAlign: 'center', margin: '0 0 16px', fontSize: '14px', opacity: 0.9 }}>
+                      {card.templateContent}
+                    </p>
+                    {card.customMessage && (
+                      <div style={{
+                        background: 'rgba(255,255,255,0.2)',
+                        borderRadius: '8px',
+                        padding: '10px 12px',
+                        marginBottom: '16px',
+                        fontSize: '13px',
+                      }}>
+                        "{card.customMessage}"
+                      </div>
+                    )}
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', opacity: 0.9 }}>
+                      <div>
+                        <span>来自 </span>
+                        <Link
+                          to={`/user/${card.senderId}`}
+                          style={{ color: card.templateTextColor, fontWeight: '500', textDecoration: 'underline' }}
+                        >
+                          {card.sender.nickname}
+                        </Link>
+                      </div>
+                      <span>{new Date(card.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    {card.itemTitle && (
+                      <div style={{ marginTop: '8px', fontSize: '11px', opacity: 0.8, textAlign: 'center' }}>
+                        相关订单：{card.itemTitle}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'greeting-cards-sent' && (
+          <div className="list-section">
+            <div className="section-header">
+              <h3>💌 我发出的卡片</h3>
+              {cardStats && (
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                  <span style={{ color: '#666', fontSize: '14px' }}>
+                    已发出 <strong style={{ color: '#52c41a' }}>{cardStats.sent}</strong> 张卡片
+                  </span>
+                </div>
+              )}
+            </div>
+            {sentCards.length === 0 ? (
+              <div className="empty-list">
+                <p>还没有发出过感谢卡片</p>
+                <small style={{ color: '#999' }}>完成订单后，可以给对方发送感谢卡片</small>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                {sentCards.map((card) => (
+                  <div key={card.id} className="card" style={{
+                    background: `linear-gradient(135deg, ${card.templateBgColor} 0%, ${card.templateBgColor}dd 100%)`,
+                    color: card.templateTextColor,
+                    borderRadius: '16px',
+                    padding: '24px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}>
+                    <div style={{ fontSize: '48px', textAlign: 'center', marginBottom: '12px' }}>
+                      {card.templateEmoji}
+                    </div>
+                    <h4 style={{ textAlign: 'center', margin: '0 0 8px', fontSize: '18px' }}>
+                      {card.templateTitle}
+                    </h4>
+                    <p style={{ textAlign: 'center', margin: '0 0 16px', fontSize: '14px', opacity: 0.9 }}>
+                      {card.templateContent}
+                    </p>
+                    {card.customMessage && (
+                      <div style={{
+                        background: 'rgba(255,255,255,0.2)',
+                        borderRadius: '8px',
+                        padding: '10px 12px',
+                        marginBottom: '16px',
+                        fontSize: '13px',
+                      }}>
+                        "{card.customMessage}"
+                      </div>
+                    )}
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', opacity: 0.9 }}>
+                      <div>
+                        <span>发送给 </span>
+                        <Link
+                          to={`/user/${card.receiverId}`}
+                          style={{ color: card.templateTextColor, fontWeight: '500', textDecoration: 'underline' }}
+                        >
+                          {card.receiver.nickname}
+                        </Link>
+                      </div>
+                      <span>{new Date(card.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    {card.itemTitle && (
+                      <div style={{ marginTop: '8px', fontSize: '11px', opacity: 0.8, textAlign: 'center' }}>
+                        相关订单：{card.itemTitle}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>

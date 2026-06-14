@@ -438,4 +438,22 @@ export const feedbackApi = {
   getStatistics: () => request('/feedbacks/statistics'),
 };
 
+export const greetingCardApi = {
+  getTemplates: (category?: string) =>
+    request('/greeting-cards/templates', { params: category ? { category } : {} }),
+  getReceivedCards: () => request('/greeting-cards/received'),
+  getSentCards: () => request('/greeting-cards/sent'),
+  getCardById: (id: string) => request(`/greeting-cards/${id}`),
+  getStats: () => request('/greeting-cards/stats'),
+  checkHasSentForOrder: (orderId: string) =>
+    request(`/greeting-cards/check-order/${orderId}`),
+  sendCard: (data: {
+    receiverId: string;
+    templateId: string;
+    customMessage?: string;
+    orderId?: string;
+    orderType?: 'borrow' | 'service' | 'demand';
+  }) => request('/greeting-cards/send', { method: 'POST', data }),
+};
+
 export default api;

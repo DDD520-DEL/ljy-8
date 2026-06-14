@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { orderApi, reviewApi, disputeApi } from '../api';
+import { orderApi, reviewApi, disputeApi, greetingCardApi } from '../api';
 import { useAuthStore } from '../store/authStore';
+import SendGreetingCardModal from '../components/SendGreetingCardModal';
 import type {
   BorrowOrderWithDetails,
   ServiceOrderWithDetails,
@@ -30,6 +31,8 @@ function OrderDetail({ type }: OrderDetailProps) {
   const [damageForm, setDamageForm] = useState({ description: '', photos: '' });
   const [submitting, setSubmitting] = useState(false);
   const [replying, setReplying] = useState(false);
+  const [showSendCardModal, setShowSendCardModal] = useState(false);
+  const [hasSentCard, setHasSentCard] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -48,6 +51,7 @@ function OrderDetail({ type }: OrderDetailProps) {
     if (res.success) {
       setOrder(res.data);
       loadReviews();
+      checkHasSentCard();
     }
     setLoading(false);
   };
@@ -56,6 +60,14 @@ function OrderDetail({ type }: OrderDetailProps) {
     const res = await reviewApi.getReviewsByOrder(id!, type);
     if (res.success) {
       setReviews(res.data || []);
+    }
+  };
+
+  const checkHasSentCard = async () => {
+    if (!id || !user?.id) return;
+    const res = await greetingCardApi.checkHasSentForOrder(id);
+    if (res.success && res.data) {
+      setHasSentCard(res.data.hasSent);
     }
   };
 
@@ -294,6 +306,8 @@ function OrderDetail({ type }: OrderDetailProps) {
     (type === 'service' && order?.status === 'completed');
 
   const hasReviewed = reviews.some(r => r.reviewerId === user?.id);
+
+  const canSendCard = canReview;
 
   const canDispute =
     order?.status === 'borrowing' ||
@@ -700,6 +714,24 @@ function OrderDetail({ type }: OrderDetailProps) {
               </button>
             )}
 
+            {canSendCard && !hasSentCard && (
+              <button
+                className="btn btn-outline-primary w-full"
+                onClick={() => setShowSendCardModal(true)}
+              >
+                💌 发送感谢卡片
+              </button>
+            )}
+
+            {canSendCard && hasSentCard && (
+              <button
+                className="btn btn-secondary w-full"
+                disabled
+              >
+                ✓ 已发送感谢卡片
+              </button>
+            )}
+
             {canDispute && (
               <button
                 className="btn btn-danger w-full"
@@ -924,6 +956,26 @@ function OrderDetail({ type }: OrderDetailProps) {
           </div>
         </div>
       )}
+
+      <SendGreetingCardModal
+        isOpen={showSendCardModal}
+        onClose={() => setShowSendCardModal(false)}
+        receiverId={
+          type === 'borrow'
+            ? user?.id === (order as BorrowOrderWithDetails)?.lenderId
+              ? (order as BorrowOrderWithDetails)?.borrowerId || ''
+              : (order as BorrowOrderWithDetails)?.lenderId || ''
+            : user?.id === (order as ServiceOrderWithDetails)?.providerId
+              ? (order as ServiceOrderWithDetails)?.clientId || ''
+              : (order as ServiceOrderWithDetails)?.providerId || ''
+        }
+        receiverName={getOtherPartyName()}
+        orderId={id}
+        orderType={type}
+        onSuccess={() => {
+          setHasSentCard(true);
+        }}
+      />
 
       <style>{`
         .order-detail-page {

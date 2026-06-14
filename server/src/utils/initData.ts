@@ -540,6 +540,89 @@ const sampleDemandResponses = [
   },
 ];
 
+const sampleGreetingCardTemplates = [
+  {
+    id: 'template-thanks-1',
+    title: '谢谢你的帮助',
+    content: '非常感谢您的热心帮助，让我顺利完成了这件事！您的善良让社区更温暖。',
+    category: 'thanks' as const,
+    emoji: '🙏',
+    bgColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    textColor: '#ffffff',
+    sortOrder: 1,
+  },
+  {
+    id: 'template-thanks-2',
+    title: '万分感谢',
+    content: '真的太感谢了！有您这样的好邻居，是我们的幸运。以后有需要我帮忙的地方，尽管开口！',
+    category: 'thanks' as const,
+    emoji: '💝',
+    bgColor: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    textColor: '#ffffff',
+    sortOrder: 2,
+  },
+  {
+    id: 'template-cooperation-1',
+    title: '合作愉快',
+    content: '这次合作非常愉快！期待下次有机会继续合作。祝您生活愉快！',
+    category: 'cooperation' as const,
+    emoji: '🤝',
+    bgColor: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    textColor: '#ffffff',
+    sortOrder: 3,
+  },
+  {
+    id: 'template-cooperation-2',
+    title: '期待下次合作',
+    content: '这次的交流很愉快，您的专业和认真让我印象深刻。希望以后能有更多合作机会！',
+    category: 'cooperation' as const,
+    emoji: '✨',
+    bgColor: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+    textColor: '#ffffff',
+    sortOrder: 4,
+  },
+  {
+    id: 'template-appreciation-1',
+    title: '您真棒',
+    content: '您的技能真的太厉害了！能认识您这样的邻居，我感到很高兴。',
+    category: 'appreciation' as const,
+    emoji: '👍',
+    bgColor: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+    textColor: '#ffffff',
+    sortOrder: 5,
+  },
+  {
+    id: 'template-appreciation-2',
+    title: '为您点赞',
+    content: '您的服务态度和专业水平都让我非常满意，必须给您点个大大的赞！',
+    category: 'appreciation' as const,
+    emoji: '🌟',
+    bgColor: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+    textColor: '#8b4513',
+    sortOrder: 6,
+  },
+  {
+    id: 'template-encouragement-1',
+    title: '加油',
+    content: '您做得很棒！继续保持，相信您会越来越好。社区因为有您而更加美好！',
+    category: 'encouragement' as const,
+    emoji: '💪',
+    bgColor: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+    textColor: '#4a5568',
+    sortOrder: 7,
+  },
+  {
+    id: 'template-encouragement-2',
+    title: '一起加油',
+    content: '邻里互助，温暖你我。让我们一起把社区建设得更美好！',
+    category: 'encouragement' as const,
+    emoji: '🌈',
+    bgColor: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%)',
+    textColor: '#8b4513',
+    sortOrder: 8,
+  },
+];
+
 export function initializeSampleData() {
   const collections = {
     users: sampleUsers,
@@ -559,6 +642,8 @@ export function initializeSampleData() {
     timeCoinTransactions: [],
     favorites: [],
     follows: [],
+    greetingCardTemplates: sampleGreetingCardTemplates,
+    greetingCards: [],
   };
 
   db.initializeData(collections);
@@ -570,6 +655,7 @@ export function initializeSampleData() {
   console.log('   - 兑换商品：' + sampleExchangeItems.length + ' 个');
   console.log('   - 社区公告：' + sampleAnnouncements.length + ' 条');
   console.log('   - 需求广场：' + sampleDemands.length + ' 条');
+  console.log('   - 感谢卡片模板：' + sampleGreetingCardTemplates.length + ' 个');
   console.log('');
   console.log('📋 测试账号：');
   console.log('   管理员：admin@example.com / admin123');

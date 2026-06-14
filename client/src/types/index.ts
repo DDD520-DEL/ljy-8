@@ -889,3 +889,51 @@ export interface FeedbackFilterParams {
   page?: number;
   pageSize?: number;
 }
+
+export type GreetingCardTemplateCategory = 'thanks' | 'appreciation' | 'cooperation' | 'encouragement';
+
+export interface GreetingCardTemplate {
+  id: string;
+  title: string;
+  content: string;
+  category: GreetingCardTemplateCategory;
+  emoji: string;
+  bgColor: string;
+  textColor: string;
+  sortOrder: number;
+}
+
+export interface GreetingCard {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  templateId: string;
+  templateTitle: string;
+  templateContent: string;
+  templateEmoji: string;
+  templateBgColor: string;
+  templateTextColor: string;
+  customMessage?: string;
+  orderId?: string;
+  orderType?: 'borrow' | 'service' | 'demand';
+  itemTitle?: string;
+  createdAt: string;
+}
+
+export interface GreetingCardWithDetails extends GreetingCard {
+  sender: PublicUser;
+  receiver: PublicUser;
+}
+
+export interface SendGreetingCardRequest {
+  receiverId: string;
+  templateId: string;
+  customMessage?: string;
+  orderId?: string;
+  orderType?: 'borrow' | 'service' | 'demand';
+}
+
+export interface GreetingCardStats {
+  received: number;
+  sent: number;
+}

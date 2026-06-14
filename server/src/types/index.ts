@@ -369,6 +369,7 @@ export type NotificationType =
   | 'activity_cancelled'
   | 'activity_completed'
   | 'activity_photo_uploaded'
+  | 'greeting_card_received'
   | 'system';
 
 export interface Notification {
@@ -961,6 +962,54 @@ export interface FeedbackFilterParams {
   type?: FeedbackType;
   status?: FeedbackStatus;
   keyword?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export type GreetingCardTemplateCategory = 'thanks' | 'appreciation' | 'cooperation' | 'encouragement';
+
+export interface GreetingCardTemplate {
+  id: string;
+  title: string;
+  content: string;
+  category: GreetingCardTemplateCategory;
+  emoji: string;
+  bgColor: string;
+  textColor: string;
+  sortOrder: number;
+}
+
+export interface GreetingCard {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  templateId: string;
+  templateTitle: string;
+  templateContent: string;
+  templateEmoji: string;
+  templateBgColor: string;
+  templateTextColor: string;
+  customMessage?: string;
+  orderId?: string;
+  orderType?: 'borrow' | 'service' | 'demand';
+  itemTitle?: string;
+  createdAt: string;
+}
+
+export interface GreetingCardWithDetails extends GreetingCard {
+  sender: PublicUser;
+  receiver: PublicUser;
+}
+
+export interface SendGreetingCardRequest {
+  receiverId: string;
+  templateId: string;
+  customMessage?: string;
+  orderId?: string;
+  orderType?: 'borrow' | 'service' | 'demand';
+}
+
+export interface GreetingCardFilterParams {
   page?: number;
   pageSize?: number;
 }
