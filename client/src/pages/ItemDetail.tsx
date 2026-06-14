@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { itemApi, orderApi, reviewApi, queueApi } from '../api';
+import { itemApi, orderApi, reviewApi, queueApi, favoriteApi } from '../api';
 import { useAuthStore } from '../store/authStore';
 import type { ItemWithOwner, ReviewWithUser, QueueEntryWithDetails } from '../types';
 
@@ -28,6 +28,9 @@ function ItemDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [queueList, setQueueList] = useState<QueueEntryWithDetails[]>([]);
   const [myQueueEntry, setMyQueueEntry] = useState<QueueEntryWithDetails | null>(null);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteCount, setFavoriteCount] = useState(0);
+  const [toggleLoading, setToggleLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -56,6 +59,25 @@ function ItemDetail() {
     if (res.success) {
       setReviews(res.data || []);
     }
+  };
+
+  const loadFavoriteStatus = async () => {
+    const res = await favoriteApi.checkFavorite(id!);
+    if (res.success) setIsFavorited(res.data?.favorited || false);
+  };
+
+  const loadFavoriteCount = async () => {
+    const res = await favoriteApi.getItemFavoriteCount(id!);
+    if (res.success) setFavoriteCount(res.data?.count || 0);
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!isAuthenticated) { navigate('/login'); return; }
+    setToggleLoading(true);
+    try {
+      const res = await favoriteApi.toggleFavorite(id!);
+      if (res.success) { setIsFavorited(res.data?.favorited || false); loadFavoriteCount(); }
+    } finally { setToggleLoading(false); }
   };
 
   const loadQueueInfo = async () => {
@@ -609,6 +631,22 @@ function ItemDetail() {
           color: #999;
           font-size: 14px;
         }
+        .favorite-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          background: none;
+          border: 1px solid #e8e8e8;
+          border-radius: 20px;
+          padding: 4px 14px;
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.2s;
+          margin-left: auto;
+        }
+        .favorite-btn:hover { border-color: #ff4d4f; background: #fff1f0; }
+        .favorite-btn.favorited { border-color: #ff4d4f; background: #fff1f0; color: #ff4d4f; }
+        .favorite-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .queue-count {
           color: #667eea;
           font-size: 14px;

@@ -1,0 +1,13 @@
+import { Router } from 'express';
+import { followController } from '../controllers/FollowController';
+import { authMiddleware } from '../utils/auth';
+const router = Router();
+router.get('/following', authMiddleware, followController.getFollowing.bind(followController));
+router.get('/followers', authMiddleware, followController.getFollowers.bind(followController));
+router.get('/check/:userId', authMiddleware, followController.checkFollow.bind(followController));
+router.post('/toggle/:userId', authMiddleware, followController.toggleFollow.bind(followController));
+router.post('/:userId', authMiddleware, followController.followUser.bind(followController));
+router.delete('/:userId', authMiddleware, followController.unfollowUser.bind(followController));
+router.get('/stats/:userId', authMiddleware, followController.getFollowStats.bind(followController));
+router.get('/latest-skills', authMiddleware, followController.getFollowingLatestSkills.bind(followController));
+export default router;

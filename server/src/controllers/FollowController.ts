@@ -1,0 +1,14 @@
+import { Response } from 'express';
+import { followService } from '../services/FollowService';
+import { AuthRequest } from '../utils/auth';
+export class FollowController {
+  async getFollowing(req: AuthRequest, res: Response) { try { if (!req.user) { res.status(401).json({ success: false, message: '未登录' }); return; } res.json({ success: true, data: followService.getFollowing(req.user.id) }); } catch (err: any) { res.status(400).json({ success: false, message: err.message }); } }
+  async getFollowers(req: AuthRequest, res: Response) { try { if (!req.user) { res.status(401).json({ success: false, message: '未登录' }); return; } res.json({ success: true, data: followService.getFollowers(req.user.id) }); } catch (err: any) { res.status(400).json({ success: false, message: err.message }); } }
+  async checkFollow(req: AuthRequest, res: Response) { try { if (!req.user) { res.status(401).json({ success: false, message: '未登录' }); return; } res.json({ success: true, data: { following: followService.isFollowing(req.user.id, req.params.userId) } }); } catch (err: any) { res.status(400).json({ success: false, message: err.message }); } }
+  async toggleFollow(req: AuthRequest, res: Response) { try { if (!req.user) { res.status(401).json({ success: false, message: '未登录' }); return; } res.json({ success: true, data: followService.toggleFollow(req.user.id, req.params.userId) }); } catch (err: any) { res.status(400).json({ success: false, message: err.message }); } }
+  async followUser(req: AuthRequest, res: Response) { try { if (!req.user) { res.status(401).json({ success: false, message: '未登录' }); return; } res.status(201).json({ success: true, data: followService.followUser(req.user.id, req.params.userId) }); } catch (err: any) { res.status(400).json({ success: false, message: err.message }); } }
+  async unfollowUser(req: AuthRequest, res: Response) { try { if (!req.user) { res.status(401).json({ success: false, message: '未登录' }); return; } followService.unfollowUser(req.user.id, req.params.userId); res.json({ success: true }); } catch (err: any) { res.status(400).json({ success: false, message: err.message }); } }
+  async getFollowStats(req: AuthRequest, res: Response) { try { if (!req.user) { res.status(401).json({ success: false, message: '未登录' }); return; } res.json({ success: true, data: followService.getFollowStats(req.params.userId) }); } catch (err: any) { res.status(400).json({ success: false, message: err.message }); } }
+  async getFollowingLatestSkills(req: AuthRequest, res: Response) { try { if (!req.user) { res.status(401).json({ success: false, message: '未登录' }); return; } res.json({ success: true, data: followService.getFollowingLatestSkills(req.user.id) }); } catch (err: any) { res.status(400).json({ success: false, message: err.message }); } }
+}
+export const followController = new FollowController();

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { skillApi, orderApi, reviewApi } from '../api';
+import { skillApi, orderApi, reviewApi, followApi } from '../api';
 import { useAuthStore } from '../store/authStore';
 import type { SkillWithProvider, ReviewWithUser, DailyAvailableSlots, TimeSlot } from '../types';
 
@@ -20,6 +20,8 @@ function SkillDetail() {
     message: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -28,6 +30,22 @@ function SkillDetail() {
       loadSkill();
     }
   }, [id]);
+
+  const loadFollowStatus = async () => {
+    if (!skill) return;
+    const res = await followApi.checkFollow(skill.providerId);
+    if (res.success) setIsFollowing(res.data?.following || false);
+  };
+
+  const handleToggleFollow = async () => {
+    if (!isAuthenticated) { navigate('/login'); return; }
+    if (!skill) return;
+    setFollowLoading(true);
+    try {
+      const res = await followApi.toggleFollow(skill.providerId);
+      if (res.success) setIsFollowing(res.data?.following || false);
+    } finally { setFollowLoading(false); }
+  };
 
   const loadSkill = async () => {
     setLoading(true);
@@ -433,6 +451,23 @@ function SkillDetail() {
           border-radius: 8px;
           margin-bottom: 20px;
         }
+        .follow-btn {
+          margin-left: auto;
+          padding: 8px 20px;
+          border: 1px solid #667eea;
+          border-radius: 20px;
+          background: white;
+          color: #667eea;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+          white-space: nowrap;
+        }
+        .follow-btn:hover { background: #667eea; color: white; }
+        .follow-btn.following { background: #f0f2ff; border-color: #667eea; color: #667eea; }
+        .follow-btn.following:hover { background: #ff4d4f; border-color: #ff4d4f; color: white; }
+        .follow-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .provider-info h4 {
           margin-bottom: 4px;
         }

@@ -1,0 +1,11 @@
+import { Router } from 'express';
+import { favoriteController } from '../controllers/FavoriteController';
+import { authMiddleware } from '../utils/auth';
+const router = Router();
+router.get('/list', authMiddleware, favoriteController.getFavorites.bind(favoriteController));
+router.get('/check/:itemId', authMiddleware, favoriteController.checkFavorite.bind(favoriteController));
+router.post('/toggle/:itemId', authMiddleware, favoriteController.toggleFavorite.bind(favoriteController));
+router.post('/:itemId', authMiddleware, favoriteController.addFavorite.bind(favoriteController));
+router.delete('/:itemId', authMiddleware, favoriteController.removeFavorite.bind(favoriteController));
+router.get('/count/:itemId', favoriteController.getItemFavoriteCount.bind(favoriteController));
+export default router;

@@ -191,4 +191,24 @@ export const statsApi = {
   getDashboardStats: () => request('/stats/dashboard'),
 };
 
+export const favoriteApi = {
+  getFavorites: () => request('/favorites/list'),
+  checkFavorite: (itemId: string) => request('/favorites/check/' + itemId),
+  toggleFavorite: (itemId: string) => request('/favorites/toggle/' + itemId, { method: 'POST' }),
+  addFavorite: (itemId: string) => request('/favorites/' + itemId, { method: 'POST' }),
+  removeFavorite: (itemId: string) => request('/favorites/' + itemId, { method: 'DELETE' }),
+  getItemFavoriteCount: (itemId: string) => request('/favorites/count/' + itemId),
+};
+
+export const followApi = {
+  getFollowing: () => request('/follows/following'),
+  getFollowers: () => request('/follows/followers'),
+  checkFollow: (userId: string) => request('/follows/check/' + userId),
+  toggleFollow: (userId: string) => request('/follows/toggle/' + userId, { method: 'POST' }),
+  followUser: (userId: string) => request('/follows/' + userId, { method: 'POST' }),
+  unfollowUser: (userId: string) => request('/follows/' + userId, { method: 'DELETE' }),
+  getFollowStats: (userId: string) => request('/follows/stats/' + userId),
+  getFollowingLatestSkills: () => request('/follows/latest-skills'),
+};
+
 export default api;

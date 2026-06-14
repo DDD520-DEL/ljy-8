@@ -316,6 +316,7 @@ export type NotificationType =
   | 'queue_turn'
   | 'queue_expired'
   | 'queue_cancelled'
+  | 'new_skill_from_followed'
   | 'system';
 
 export interface Notification {
@@ -325,9 +326,35 @@ export interface Notification {
   title: string;
   message: string;
   relatedId?: string;
-  relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue';
+  relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue' | 'skill';
   read: boolean;
   createdAt: string;
+}
+
+export interface FavoriteItem {
+  id: string;
+  userId: string;
+  itemId: string;
+  createdAt: string;
+}
+
+export interface FavoriteItemWithDetail extends FavoriteItem {
+  item: ItemWithOwner;
+}
+
+export interface FollowUser {
+  id: string;
+  followerId: string;
+  followingId: string;
+  createdAt: string;
+}
+
+export interface FollowWithDetail extends FollowUser {
+  following: PublicUser;
+}
+
+export interface FollowerWithDetail extends FollowUser {
+  follower: PublicUser;
 }
 
 export interface DamageReportRequest {

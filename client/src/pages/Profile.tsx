@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { authApi, itemApi, skillApi, reviewApi, queueApi, transactionApi } from '../api';
+import { authApi, itemApi, skillApi, reviewApi, queueApi, transactionApi, favoriteApi, followApi } from '../api';
 import type {
   ItemWithOwner,
   SkillWithProvider,
@@ -11,6 +11,9 @@ import type {
   QueueNotification,
   DepositTransaction,
   TimeCoinTransaction,
+  FavoriteItemWithDetail,
+  FollowWithDetail,
+  FollowerWithDetail,
 } from '../types';
 
 function Profile() {
@@ -39,6 +42,10 @@ function Profile() {
   const [timeCoinTransactions, setTimeCoinTransactions] = useState<TimeCoinTransaction[]>([]);
   const [depositFilter, setDepositFilter] = useState<string>('');
   const [timeCoinFilter, setTimeCoinFilter] = useState<string>('');
+  const [favoriteItems, setFavoriteItems] = useState<FavoriteItemWithDetail[]>([]);
+  const [followingList, setFollowingList] = useState<FollowWithDetail[]>([]);
+  const [followerList, setFollowerList] = useState<FollowerWithDetail[]>([]);
+  const [followingLatestSkills, setFollowingLatestSkills] = useState<SkillWithProvider[]>([]);
 
   useEffect(() => {
     if (activeTab === 'items') {
@@ -137,6 +144,13 @@ function Profile() {
       setMyQueues(res.data || []);
     }
   };
+
+  const loadFavoriteItems = async () => { const res = await favoriteApi.getFavorites(); if (res.success) setFavoriteItems(res.data || []); };
+  const loadFollowing = async () => { const res = await followApi.getFollowing(); if (res.success) setFollowingList(res.data || []); };
+  const loadFollowers = async () => { const res = await followApi.getFollowers(); if (res.success) setFollowerList(res.data || []); };
+  const loadFollowingLatestSkills = async () => { const res = await followApi.getFollowingLatestSkills(); if (res.success) setFollowingLatestSkills(res.data || []); };
+  const handleRemoveFavorite = async (itemId: string) => { const res = await favoriteApi.removeFavorite(itemId); if (res.success) loadFavoriteItems(); else alert(res.message || '取消收藏失败'); };
+  const handleUnfollow = async (userId: string) => { const res = await followApi.unfollowUser(userId); if (res.success) loadFollowing(); else alert(res.message || '取消关注失败'); };
 
   const loadNotifications = async () => {
     const res = await queueApi.getNotifications();
@@ -434,6 +448,70 @@ function Profile() {
                       <h4 className="item-title">{item.title}</h4>
                       <p className="item-price">押金 ¥{item.deposit}</p>
                     </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'favorites' && (
+          <div className="list-section"><h3>物品收藏</h3>
+            {favoriteItems.length === 0 ? (<div className="empty-list"><p>暂无收藏的物品</p><Link to="/items" className="btn btn-primary">去逛逛</Link></div>) : (
+              <div className="item-grid">
+                {favoriteItems.map((fav) => (
+                  <div key={fav.id} className="item-card" style={{ position: 'relative' }}>
+                    <Link to={`/items/${fav.item.id}`}>
+                      <div className="item-image">{fav.item.images[0] ? (<img src={fav.item.images[0]} alt={fav.item.title} />) : (<div className="item-placeholder">📦</div>)}</div>
+                      <div className="item-info"><h4 className="item-title">{fav.item.title}</h4><p className="item-price">押金 ¥{fav.item.deposit}</p></div>
+                    </Link>
+                    <button className="unfavorite-btn" onClick={() => handleRemoveFavorite(fav.itemId)}>取消收藏</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'following' && (
+          <div className="list-section"><h3>我的关注</h3>
+            {followingList.length === 0 ? (<div className="empty-list"><p>暂无关注的用户</p><Link to="/neighborhood" className="btn btn-primary">去发现</Link></div>) : (
+              <div className="user-list">
+                {followingList.map((follow) => (
+                  <div key={follow.id} className="user-list-item">
+                    <img src={follow.following.avatar} alt="" className="avatar" />
+                    <div className="user-list-info"><div className="user-list-name">{follow.following.nickname}</div><div className="user-list-meta"><span className="credit-level" style={{ background: getCreditLevelColor(follow.following.creditLevel) + '20', color: getCreditLevelColor(follow.following.creditLevel) }}>{follow.following.creditLevel}级</span></div></div>
+                    <button className="unfollow-btn" onClick={() => handleUnfollow(follow.followingId)}>取消关注</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'followers' && (
+          <div className="list-section"><h3>我的粉丝</h3>
+            {followerList.length === 0 ? (<div className="empty-list"><p>暂无粉丝</p></div>) : (
+              <div className="user-list">
+                {followerList.map((follower) => (
+                  <div key={follower.id} className="user-list-item">
+                    <img src={follower.follower.avatar} alt="" className="avatar" />
+                    <div className="user-list-info"><div className="user-list-name">{follower.follower.nickname}</div><div className="user-list-meta"><span className="credit-level" style={{ background: getCreditLevelColor(follower.follower.creditLevel) + '20', color: getCreditLevelColor(follower.follower.creditLevel) }}>{follower.follower.creditLevel}级</span></div></div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'following-feed' && (
+          <div className="list-section"><h3>关注动态</h3>
+            {followingLatestSkills.length === 0 ? (<div className="empty-list"><p>关注用户暂无新动态</p></div>) : (
+              <div className="follow-feed-grid">
+                {followingLatestSkills.map((skill) => (
+                  <Link key={skill.id} to={`/skills/${skill.id}`} className="skill-card">
+                    <div className="skill-image">{skill.images[0] ? (<img src={skill.images[0]} alt={skill.title} />) : (<div className="skill-placeholder">💡</div>)}</div>
+                    <div className="skill-info"><h4 className="skill-title">{skill.title}<span className="skill-provider-tag">{skill.provider.nickname}</span></h4><p className="skill-price">⏰ {skill.timeCoinPrice} 时间币</p></div>
                   </Link>
                 ))}
               </div>

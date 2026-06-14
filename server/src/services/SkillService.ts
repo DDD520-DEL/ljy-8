@@ -1,5 +1,6 @@
 import { skillRepository } from '../repositories/SkillRepository';
 import { Skill, SkillWithProvider } from '../types';
+import { followService } from './FollowService';
 
 export class SkillService {
   public getSkills(category?: string, keyword?: string): SkillWithProvider[] {
@@ -34,7 +35,9 @@ export class SkillService {
 
   public createSkill(providerId: string, skillData: Omit<Skill, 'id' | 'providerId' | 'createdAt' | 'viewCount' | 'status'>): SkillWithProvider {
     const skill = skillRepository.create({ ...skillData, providerId });
-    return skillRepository.toSkillWithProvider(skill);
+    const result = skillRepository.toSkillWithProvider(skill);
+    followService.notifyFollowersNewSkill(providerId, skill.id, skill.title);
+    return result;
   }
 
   public updateSkill(id: string, providerId: string, updates: Partial<Skill>): SkillWithProvider | null {

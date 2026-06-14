@@ -264,6 +264,8 @@ export function initializeSampleData() {
     disputes: [],
     depositTransactions: [],
     timeCoinTransactions: [],
+    favorites: [],
+    follows: [],
   };
 
   db.initializeData(collections);
