@@ -72,7 +72,7 @@ export class ItemRepository {
     if (filters.minCreditLevel) {
       items = items.filter(item => {
         if (!item.minCreditLevel) return true;
-        return compareCreditLevels(item.minCreditLevel, filters.minCreditLevel!) <= 0;
+        return compareCreditLevels(item.minCreditLevel, filters.minCreditLevel!) >= 0;
       });
     }
 
