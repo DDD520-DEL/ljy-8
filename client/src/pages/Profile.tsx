@@ -327,6 +327,30 @@ function Profile() {
           我的技能
         </button>
         <button
+          className={`tab ${activeTab === 'favorites' ? 'active' : ''}`}
+          onClick={() => setActiveTab('favorites')}
+        >
+          物品收藏
+        </button>
+        <button
+          className={`tab ${activeTab === 'following' ? 'active' : ''}`}
+          onClick={() => setActiveTab('following')}
+        >
+          我的关注
+        </button>
+        <button
+          className={`tab ${activeTab === 'followers' ? 'active' : ''}`}
+          onClick={() => setActiveTab('followers')}
+        >
+          我的粉丝
+        </button>
+        <button
+          className={`tab ${activeTab === 'following-feed' ? 'active' : ''}`}
+          onClick={() => setActiveTab('following-feed')}
+        >
+          关注动态
+        </button>
+        <button
           className={`tab ${activeTab === 'queues' ? 'active' : ''}`}
           onClick={() => setActiveTab('queues')}
         >

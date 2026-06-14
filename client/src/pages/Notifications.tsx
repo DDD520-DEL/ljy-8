@@ -47,6 +47,7 @@ function Notifications() {
       queue_turn: '🔔',
       queue_expired: '⏰',
       queue_cancelled: '❌',
+      new_skill_from_followed: '✨',
       system: '📢',
     };
     return icons[type] || '📧';
@@ -60,6 +61,7 @@ function Notifications() {
       queue_turn: '排队通知',
       queue_expired: '排队通知',
       queue_cancelled: '排队通知',
+      new_skill_from_followed: '关注动态',
       system: '系统通知',
     };
     return names[type] || '其他';
@@ -73,6 +75,7 @@ function Notifications() {
       queue_turn: '#52c41a',
       queue_expired: '#ff4d4f',
       queue_cancelled: '#999',
+      new_skill_from_followed: '#667eea',
       system: '#722ed1',
     };
     return colors[type] || '#667eea';
@@ -138,6 +141,8 @@ function Notifications() {
       navigate(`/disputes/${notification.relatedId}`);
     } else if (notification.relatedType === 'item') {
       navigate(`/items/${notification.relatedId}`);
+    } else if (notification.relatedType === 'skill') {
+      navigate(`/skills/${notification.relatedId}`);
     }
   };
 
@@ -147,6 +152,7 @@ function Notifications() {
     { value: 'dispute_status', label: '纠纷通知' },
     { value: 'new_review', label: '评价通知' },
     { value: 'queue_turn', label: '排队通知' },
+    { value: 'new_skill_from_followed', label: '关注动态' },
     { value: 'system', label: '系统通知' },
   ];
 

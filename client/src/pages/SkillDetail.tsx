@@ -197,6 +197,15 @@ function SkillDetail() {
               <p>信用评分：{skill.provider.creditScore} 分（{skill.provider.creditLevel}级）</p>
               <p className="text-muted">{skill.provider.neighborhood}</p>
             </div>
+            {!isProvider && (
+              <button
+                className={`follow-btn ${isFollowing ? 'following' : ''}`}
+                onClick={handleToggleFollow}
+                disabled={followLoading}
+              >
+                {isFollowing ? '已关注' : '+ 关注'}
+              </button>
+            )}
           </div>
 
           {!isProvider && (

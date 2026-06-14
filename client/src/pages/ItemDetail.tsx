@@ -229,6 +229,14 @@ function ItemDetail() {
             {queueList.length > 0 && (
               <span className="queue-count">👥 {queueList.length} 人排队</span>
             )}
+            <button
+              className={`favorite-btn ${isFavorited ? 'favorited' : ''}`}
+              onClick={handleToggleFavorite}
+              disabled={toggleLoading}
+              title={isFavorited ? '取消收藏' : '收藏物品'}
+            >
+              {isFavorited ? '❤️' : '🤍'} {favoriteCount > 0 ? favoriteCount : ''}
+            </button>
           </div>
 
           <div className="item-price-section">
