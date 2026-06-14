@@ -215,6 +215,26 @@ export const favoriteApi = {
   getItemFavoriteCount: (itemId: string) => request('/favorites/count/' + itemId),
 };
 
+export const favoriteFolderApi = {
+  getFolders: () => request('/favorite-folders/folders'),
+  getFolder: (folderId: string) => request(`/favorite-folders/folders/${folderId}`),
+  createFolder: (data: { name: string; description?: string; icon?: string }) =>
+    request('/favorite-folders/folders', { method: 'POST', data }),
+  updateFolder: (folderId: string, data: { name?: string; description?: string; icon?: string }) =>
+    request(`/favorite-folders/folders/${folderId}`, { method: 'PUT', data }),
+  deleteFolder: (folderId: string) =>
+    request(`/favorite-folders/folders/${folderId}`, { method: 'DELETE' }),
+  getFolderItems: (folderId: string) => request(`/favorite-folders/folders/${folderId}/items`),
+  addToFolder: (folderId: string, data: { targetId: string; targetType: 'item' | 'skill' }) =>
+    request(`/favorite-folders/folders/${folderId}/items`, { method: 'POST', data }),
+  removeFromFolder: (folderId: string, favoriteId: string) =>
+    request(`/favorite-folders/folders/${folderId}/items/${favoriteId}`, { method: 'DELETE' }),
+  batchRemoveFromFolder: (folderId: string, favoriteIds: string[]) =>
+    request(`/favorite-folders/folders/${folderId}/items`, { method: 'DELETE', data: { favoriteIds } }),
+  checkFavoriteStatus: (targetId: string, targetType: 'item' | 'skill') =>
+    request('/favorite-folders/check', { params: { targetId, targetType } }),
+};
+
 export const followApi = {
   getFollowing: () => request('/follows/following'),
   getFollowers: () => request('/follows/followers'),

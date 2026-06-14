@@ -552,18 +552,25 @@ function Profile() {
         )}
 
         {activeTab === 'favorites' && (
-          <div className="list-section"><h3>物品收藏</h3>
+          <div className="list-section">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3>我的收藏</h3>
+              <Link to="/favorites" className="btn btn-outline-primary">管理收藏夹</Link>
+            </div>
             {favoriteItems.length === 0 ? (<div className="empty-list"><p>暂无收藏的物品</p><Link to="/items" className="btn btn-primary">去逛逛</Link></div>) : (
               <div className="item-grid">
-                {favoriteItems.map((fav) => (
-                  <div key={fav.id} className="item-card" style={{ position: 'relative' }}>
-                    <Link to={`/items/${fav.item.id}`}>
-                      <div className="item-image">{fav.item.images[0] ? (<img src={fav.item.images[0]} alt={fav.item.title} />) : (<div className="item-placeholder">📦</div>)}</div>
-                      <div className="item-info"><h4 className="item-title">{fav.item.title}</h4><p className="item-price">押金 ¥{fav.item.deposit}</p></div>
-                    </Link>
-                    <button className="unfavorite-btn" onClick={() => handleRemoveFavorite(fav.itemId)}>取消收藏</button>
-                  </div>
-                ))}
+                {favoriteItems.map((fav) => {
+                  if (!fav.item) return null;
+                  return (
+                    <div key={fav.id} className="item-card" style={{ position: 'relative' }}>
+                      <Link to={`/items/${fav.item.id}`}>
+                        <div className="item-image">{fav.item.images[0] ? (<img src={fav.item.images[0]} alt={fav.item.title} />) : (<div className="item-placeholder">📦</div>)}</div>
+                        <div className="item-info"><h4 className="item-title">{fav.item.title}</h4><p className="item-price">押金 ¥{fav.item.deposit}</p></div>
+                      </Link>
+                      <button className="unfavorite-btn" onClick={() => handleRemoveFavorite(fav.targetId)}>取消收藏</button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

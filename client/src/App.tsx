@@ -38,6 +38,8 @@ import Activities from './pages/Activities';
 import ActivityDetail from './pages/ActivityDetail';
 import PublishActivity from './pages/PublishActivity';
 import MyActivities from './pages/MyActivities';
+import FavoriteFolders from './pages/FavoriteFolders';
+import FavoriteFolderDetail from './pages/FavoriteFolderDetail';
 import { useAuthStore } from './store/authStore';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -205,6 +207,22 @@ function App() {
           element={
             <PrivateRoute>
               <Notifications />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="favorites"
+          element={
+            <PrivateRoute>
+              <FavoriteFolders />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="favorites/:folderId"
+          element={
+            <PrivateRoute>
+              <FavoriteFolderDetail />
             </PrivateRoute>
           }
         />

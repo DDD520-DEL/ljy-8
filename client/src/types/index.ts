@@ -439,15 +439,36 @@ export interface Notification {
   createdAt: string;
 }
 
+export type FavoriteTargetType = 'item' | 'skill';
+
+export interface FavoriteFolder {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  itemCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface FavoriteItem {
   id: string;
   userId: string;
-  itemId: string;
+  folderId: string;
+  targetId: string;
+  targetType: FavoriteTargetType;
   createdAt: string;
 }
 
 export interface FavoriteItemWithDetail extends FavoriteItem {
-  item: ItemWithOwner;
+  item?: ItemWithOwner;
+  skill?: SkillWithProvider;
+}
+
+export interface FavoriteCheckResult {
+  favorited: boolean;
+  folderIds: string[];
 }
 
 export interface FollowUser {
