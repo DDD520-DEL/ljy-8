@@ -353,4 +353,46 @@ export const verificationApi = {
     request(`/verification/${id}/review`, { method: 'PUT', data }),
 };
 
+export const activityApi = {
+  getActivities: (params?: {
+    category?: string;
+    keyword?: string;
+    userNeighborhood?: string;
+    status?: string;
+    sortBy?: string;
+    sortOrder?: string;
+    page?: number;
+    pageSize?: number;
+  }) => request('/activities', { params }),
+  getActivityById: (id: string) => request(`/activities/${id}`),
+  getMyOrganizedActivities: () => request('/activities/my/organized'),
+  getMyRegisteredActivities: () => request('/activities/my/registered'),
+  createActivity: (data: {
+    title: string;
+    description: string;
+    category: string;
+    images?: string[];
+    location: string;
+    startTime: string;
+    endTime: string;
+    maxParticipants: number;
+  }) => request('/activities', { method: 'POST', data }),
+  updateActivity: (id: string, data: any) =>
+    request(`/activities/${id}`, { method: 'PUT', data }),
+  registerActivity: (id: string) =>
+    request(`/activities/${id}/register`, { method: 'POST' }),
+  cancelRegistration: (id: string) =>
+    request(`/activities/${id}/cancel-registration`, { method: 'PUT' }),
+  startActivity: (id: string) =>
+    request(`/activities/${id}/start`, { method: 'PUT' }),
+  completeActivity: (id: string) =>
+    request(`/activities/${id}/complete`, { method: 'PUT' }),
+  cancelActivity: (id: string, reason?: string) =>
+    request(`/activities/${id}/cancel`, { method: 'PUT', data: { reason } }),
+  uploadPhoto: (id: string, data: { imageUrl: string; description?: string }) =>
+    request(`/activities/${id}/photos`, { method: 'POST', data }),
+  deletePhoto: (photoId: string) =>
+    request(`/activities/photos/${photoId}`, { method: 'DELETE' }),
+};
+
 export default api;

@@ -19,9 +19,11 @@ import announcementRoutes from './routes/announcements';
 import donationRoutes from './routes/donations';
 import demandRoutes from './routes/demands';
 import verificationRoutes from './routes/verification';
+import activityRoutes from './routes/activities';
 import { db } from './utils/db';
 import { initializeSampleData } from './utils/initData';
 import { queueService } from './services/QueueService';
+import { activityService } from './services/ActivityService';
 
 dotenv.config();
 
@@ -52,6 +54,7 @@ app.use('/api/announcements', announcementRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/demands', demandRoutes);
 app.use('/api/verification', verificationRoutes);
+app.use('/api/activities', activityRoutes);
 
 app.get('/api/health', (_req: express.Request, res: express.Response) => {
   res.json({ success: true, message: '邻里共享平台服务运行中' });
@@ -62,6 +65,14 @@ setInterval(() => {
     queueService.checkAndExpireNotifiedEntries();
   } catch (err) {
     console.error('检查超时排队记录出错:', err);
+  }
+}, 60 * 1000);
+
+setInterval(() => {
+  try {
+    activityService.checkAndUpdateActivityStatuses();
+  } catch (err) {
+    console.error('检查更新活动状态出错:', err);
   }
 }, 60 * 1000);
 

@@ -39,7 +39,7 @@ export class NotificationRepository {
     title: string;
     message: string;
     relatedId?: string;
-    relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue' | 'skill';
+    relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue' | 'skill' | 'donation' | 'activity';
   }): Notification {
     const notification: Notification = {
       id: generateId(),

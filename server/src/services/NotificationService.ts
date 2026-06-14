@@ -44,7 +44,7 @@ export class NotificationService {
     title: string;
     message: string;
     relatedId?: string;
-    relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue' | 'skill';
+    relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue' | 'skill' | 'activity';
   }): Notification {
     return notificationRepository.create(data);
   }
@@ -238,6 +238,104 @@ export class NotificationService {
       message,
       relatedId: orderId,
       relatedType: 'item',
+    });
+  }
+
+  public sendActivityNewRegistrationNotification(
+    organizerId: string,
+    activityId: string,
+    activityTitle: string,
+    participantName: string
+  ): Notification {
+    const title = '活动有新报名';
+    const message = `您发布的活动「${activityTitle}」有新用户 ${participantName} 报名参加`;
+    return this.sendNotification({
+      userId: organizerId,
+      type: 'activity_new_registration',
+      title,
+      message,
+      relatedId: activityId,
+      relatedType: 'activity',
+    });
+  }
+
+  public sendActivityStatusNotification(
+    userId: string,
+    activityId: string,
+    activityTitle: string,
+    status: string
+  ): Notification {
+    const statusText: Record<string, string> = {
+      recruiting: '报名中',
+      full: '名额已满',
+      ongoing: '进行中',
+      completed: '已完成',
+      cancelled: '已取消',
+    };
+    const title = '活动状态更新';
+    const message = `活动「${activityTitle}」状态已更新为：${statusText[status] || status}`;
+    return this.sendNotification({
+      userId,
+      type: 'activity_status',
+      title,
+      message,
+      relatedId: activityId,
+      relatedType: 'activity',
+    });
+  }
+
+  public sendActivityCancelledNotification(
+    userId: string,
+    activityId: string,
+    activityTitle: string,
+    reason?: string
+  ): Notification {
+    const title = '活动已取消';
+    const message = reason
+      ? `您报名的活动「${activityTitle}」已取消，原因：${reason}`
+      : `您报名的活动「${activityTitle}」已取消`;
+    return this.sendNotification({
+      userId,
+      type: 'activity_cancelled',
+      title,
+      message,
+      relatedId: activityId,
+      relatedType: 'activity',
+    });
+  }
+
+  public sendActivityCompletedNotification(
+    userId: string,
+    activityId: string,
+    activityTitle: string
+  ): Notification {
+    const title = '活动已完成';
+    const message = `您参加的活动「${activityTitle}」已顺利完成，快来上传活动照片分享精彩瞬间吧！`;
+    return this.sendNotification({
+      userId,
+      type: 'activity_completed',
+      title,
+      message,
+      relatedId: activityId,
+      relatedType: 'activity',
+    });
+  }
+
+  public sendActivityPhotoUploadedNotification(
+    userId: string,
+    activityId: string,
+    activityTitle: string,
+    uploaderName: string
+  ): Notification {
+    const title = '活动有新照片';
+    const message = `${uploaderName} 在活动「${activityTitle}」中上传了新照片，快来看看吧！`;
+    return this.sendNotification({
+      userId,
+      type: 'activity_photo_uploaded',
+      title,
+      message,
+      relatedId: activityId,
+      relatedType: 'activity',
     });
   }
 }

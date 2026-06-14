@@ -70,6 +70,16 @@ function Layout() {
         return '✅';
       case 'demand_order_completed':
         return '🎉';
+      case 'activity_new_registration':
+        return '🙋';
+      case 'activity_status':
+        return '📅';
+      case 'activity_cancelled':
+        return '❌';
+      case 'activity_completed':
+        return '✅';
+      case 'activity_photo_uploaded':
+        return '📸';
       default:
         return '📧';
     }
@@ -93,6 +103,8 @@ function Layout() {
       }
     } else if (notification.relatedType === 'donation') {
       navigate(`/donations/${notification.relatedId}`);
+    } else if (notification.relatedType === 'activity') {
+      navigate(`/activities/${notification.relatedId}`);
     } else if (notification.type.startsWith('demand')) {
       navigate('/my-demands');
     } else {
@@ -105,6 +117,7 @@ function Layout() {
     { path: '/announcements', label: '社区公告' },
     { path: '/leaderboard', label: '排行榜' },
     { path: '/neighborhood', label: '邻里圈' },
+    { path: '/activities', label: '邻里活动' },
     { path: '/items', label: '物品共享' },
     { path: '/donations', label: '免费捐赠' },
     { path: '/skills', label: '技能交换' },
@@ -161,6 +174,9 @@ function Layout() {
                 </Link>
                 <Link to="/my-demands" className="nav-link">
                   📝 我的需求
+                </Link>
+                <Link to="/my-activities" className="nav-link">
+                  🎉 我的活动
                 </Link>
                 <Link to="/disputes" className="nav-link">
                   纠纷中心

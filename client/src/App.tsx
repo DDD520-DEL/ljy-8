@@ -34,6 +34,10 @@ import DemandDetail from './pages/DemandDetail';
 import PublishDemand from './pages/PublishDemand';
 import MyDemands from './pages/MyDemands';
 import Leaderboard from './pages/Leaderboard';
+import Activities from './pages/Activities';
+import ActivityDetail from './pages/ActivityDetail';
+import PublishActivity from './pages/PublishActivity';
+import MyActivities from './pages/MyActivities';
 import { useAuthStore } from './store/authStore';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -119,6 +123,24 @@ function App() {
           element={
             <PrivateRoute>
               <MyDemands />
+            </PrivateRoute>
+          }
+        />
+        <Route path="activities" element={<Activities />} />
+        <Route path="activities/:id" element={<ActivityDetail />} />
+        <Route
+          path="publish/activity"
+          element={
+            <PrivateRoute>
+              <PublishActivity />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="my-activities"
+          element={
+            <PrivateRoute>
+              <MyActivities />
             </PrivateRoute>
           }
         />

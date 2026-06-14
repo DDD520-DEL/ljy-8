@@ -364,6 +364,11 @@ export type NotificationType =
   | 'demand_new_response'
   | 'demand_response_accepted'
   | 'demand_order_completed'
+  | 'activity_new_registration'
+  | 'activity_status'
+  | 'activity_cancelled'
+  | 'activity_completed'
+  | 'activity_photo_uploaded'
   | 'system';
 
 export interface Notification {
@@ -373,7 +378,7 @@ export interface Notification {
   title: string;
   message: string;
   relatedId?: string;
-  relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue' | 'skill';
+  relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue' | 'skill' | 'donation' | 'activity';
   read: boolean;
   createdAt: string;
 }
@@ -777,4 +782,103 @@ export interface LeaderboardResult {
   type: LeaderboardType;
   period: LeaderboardPeriod;
   entries: LeaderboardEntry[];
+}
+
+export type ActivityStatus = 'recruiting' | 'full' | 'ongoing' | 'completed' | 'cancelled';
+export type ActivityCategory = 'sports' | 'culture' | 'education' | 'social' | 'other';
+
+export interface Activity {
+  id: string;
+  organizerId: string;
+  title: string;
+  description: string;
+  category: ActivityCategory;
+  images: string[];
+  location: string;
+  startTime: string;
+  endTime: string;
+  maxParticipants: number;
+  currentParticipants: number;
+  status: ActivityStatus;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ActivityRegistration {
+  id: string;
+  activityId: string;
+  userId: string;
+  status: 'registered' | 'cancelled' | 'attended';
+  registeredAt: string;
+  cancelledAt?: string;
+}
+
+export interface ActivityPhoto {
+  id: string;
+  activityId: string;
+  userId: string;
+  imageUrl: string;
+  description?: string;
+  createdAt: string;
+}
+
+export interface ActivityWithDetails extends Activity {
+  organizer: PublicUser;
+  registrations: ActivityRegistrationWithUser[];
+  photos: ActivityPhotoWithUser[];
+  isRegistered?: boolean;
+}
+
+export interface ActivityRegistrationWithUser extends ActivityRegistration {
+  user: PublicUser;
+}
+
+export interface ActivityPhotoWithUser extends ActivityPhoto {
+  user: PublicUser;
+}
+
+export interface CreateActivityRequest {
+  title: string;
+  description: string;
+  category: ActivityCategory;
+  images?: string[];
+  location: string;
+  startTime: string;
+  endTime: string;
+  maxParticipants: number;
+}
+
+export interface UpdateActivityRequest {
+  title?: string;
+  description?: string;
+  category?: ActivityCategory;
+  images?: string[];
+  location?: string;
+  startTime?: string;
+  endTime?: string;
+  maxParticipants?: number;
+  status?: ActivityStatus;
+}
+
+export interface ActivityFilterParams {
+  category?: ActivityCategory | 'all';
+  keyword?: string;
+  userNeighborhood?: string;
+  status?: ActivityStatus;
+}
+
+export interface ActivitySortParams {
+  sortBy?: 'createdAt' | 'startTime' | 'viewCount' | 'maxParticipants';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface ActivityPaginationParams {
+  page?: number;
+  pageSize?: number;
+}
+
+export interface UploadActivityPhotoRequest {
+  imageUrl: string;
+  description?: string;
 }
