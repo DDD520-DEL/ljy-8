@@ -438,6 +438,43 @@ export interface FollowerWithDetail extends FollowUser {
   follower: PublicUser;
 }
 
+export type AnnouncementCategory = 'water_electricity' | 'property' | 'community_activity' | 'other';
+export type AnnouncementPriority = 'normal' | 'important' | 'urgent';
+export type AnnouncementStatus = 'published' | 'draft' | 'archived';
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  category: AnnouncementCategory;
+  priority: AnnouncementPriority;
+  publisherId: string;
+  status: AnnouncementStatus;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AnnouncementWithPublisher extends Announcement {
+  publisher: PublicUser;
+}
+
+export interface CreateAnnouncementRequest {
+  title: string;
+  content: string;
+  category: AnnouncementCategory;
+  priority: AnnouncementPriority;
+  status?: AnnouncementStatus;
+}
+
+export interface UpdateAnnouncementRequest {
+  title?: string;
+  content?: string;
+  category?: AnnouncementCategory;
+  priority?: AnnouncementPriority;
+  status?: AnnouncementStatus;
+}
+
 export interface DashboardStats {
   totalUsers: number;
   totalItems: number;

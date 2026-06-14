@@ -1,23 +1,44 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { itemApi, skillApi } from '../api';
-import type { ItemWithOwner, SkillWithProvider } from '../types';
+import { itemApi, skillApi, announcementApi } from '../api';
+import type { ItemWithOwner, SkillWithProvider, AnnouncementWithPublisher, AnnouncementCategory } from '../types';
 
 function Home() {
   const [items, setItems] = useState<ItemWithOwner[]>([]);
   const [skills, setSkills] = useState<SkillWithProvider[]>([]);
+  const [announcements, setAnnouncements] = useState<AnnouncementWithPublisher[]>([]);
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
-    const [itemsRes, skillsRes] = await Promise.all([
+    const [itemsRes, skillsRes, annRes] = await Promise.all([
       itemApi.getItems(),
       skillApi.getSkills(),
+      announcementApi.getLatestAnnouncements(5),
     ]);
     if (itemsRes.success) setItems(itemsRes.data?.slice(0, 4) || []);
     if (skillsRes.success) setSkills(skillsRes.data?.slice(0, 4) || []);
+    if (annRes.success) setAnnouncements(annRes.data || []);
+  };
+
+  const getCategoryInfo = (category: AnnouncementCategory) => {
+    const map: Record<AnnouncementCategory, { label: string; icon: string; color: string }> = {
+      water_electricity: { label: '停水停电', icon: '💧', color: '#1890ff' },
+      property: { label: '物业消息', icon: '🏢', color: '#52c41a' },
+      community_activity: { label: '社区活动', icon: '🎉', color: '#fa8c16' },
+      other: { label: '其他通知', icon: '📋', color: '#722ed1' },
+    };
+    return map[category];
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+    });
   };
 
   const itemCategories = [
@@ -68,6 +89,50 @@ function Home() {
           </div>
         </div>
       </section>
+
+      {announcements.length > 0 && (
+        <section className="section announcements-section">
+          <div className="container">
+            <div className="section-header">
+              <h2 className="section-title">📢 最新公告</h2>
+              <Link to="/announcements" className="section-more">
+                查看历史公告 →
+              </Link>
+            </div>
+            <div className="announcement-list">
+              {announcements.map((ann) => {
+                const catInfo = getCategoryInfo(ann.category);
+                return (
+                  <Link
+                    key={ann.id}
+                    to={`/announcements/${ann.id}`}
+                    className="announcement-item"
+                  >
+                    <div className="announcement-item-left">
+                      <span
+                        className="cat-badge"
+                        style={{ background: catInfo.color + '20', color: catInfo.color }}
+                      >
+                        {catInfo.icon} {catInfo.label}
+                      </span>
+                      <span className="ann-date">{formatDate(ann.createdAt)}</span>
+                    </div>
+                    <div className="announcement-item-right">
+                      <h4 className="ann-title">
+                        {ann.priority === 'urgent' && <span className="urgent-dot">●</span>}
+                        {ann.title}
+                      </h4>
+                      <p className="ann-preview">
+                        {ann.content.replace(/\n/g, ' ').slice(0, 60)}...
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="section">
         <div className="container">
@@ -205,6 +270,73 @@ function Home() {
       </section>
 
       <style>{`
+        .announcements-section {
+          background: white;
+        }
+        .announcement-list {
+          background: #fafafa;
+          border-radius: 12px;
+          padding: 4px;
+        }
+        .announcement-item {
+          display: flex;
+          padding: 16px;
+          border-radius: 8px;
+          text-decoration: none;
+          color: inherit;
+          transition: all 0.2s;
+          margin-bottom: 4px;
+        }
+        .announcement-item:last-child {
+          margin-bottom: 0;
+        }
+        .announcement-item:hover {
+          background: white;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .announcement-item-left {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-right: 16px;
+          min-width: 110px;
+        }
+        .cat-badge {
+          padding: 4px 10px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 500;
+          white-space: nowrap;
+        }
+        .ann-date {
+          color: #999;
+          font-size: 12px;
+        }
+        .announcement-item-right {
+          flex: 1;
+          min-width: 0;
+        }
+        .ann-title {
+          font-size: 15px;
+          font-weight: 500;
+          margin: 0 0 6px 0;
+          color: #333;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .urgent-dot {
+          color: #ff4d4f;
+          font-size: 10px;
+        }
+        .ann-preview {
+          font-size: 13px;
+          color: #999;
+          margin: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
         .hero {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
@@ -421,6 +553,16 @@ function Home() {
           color: #999;
         }
         @media (max-width: 768px) {
+          .announcement-item {
+            flex-direction: column;
+            gap: 8px;
+          }
+          .announcement-item-left {
+            flex-direction: row;
+            align-items: center;
+            min-width: auto;
+            margin-right: 0;
+          }
           .hero-title {
             font-size: 32px;
           }

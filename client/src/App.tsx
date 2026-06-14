@@ -21,6 +21,9 @@ import AdminDashboard from './pages/AdminDashboard';
 import Shop from './pages/Shop';
 import MyExchanges from './pages/MyExchanges';
 import AdminShopManage from './pages/AdminShopManage';
+import AnnouncementsList from './pages/AnnouncementsList';
+import AnnouncementDetail from './pages/AnnouncementDetail';
+import AdminAnnouncementManage from './pages/AdminAnnouncementManage';
 import { useAuthStore } from './store/authStore';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -149,6 +152,16 @@ function App() {
           element={
             <PrivateRoute>
               <AdminShopManage />
+            </PrivateRoute>
+          }
+        />
+        <Route path="announcements" element={<AnnouncementsList />} />
+        <Route path="announcements/:id" element={<AnnouncementDetail />} />
+        <Route
+          path="admin/announcements"
+          element={
+            <PrivateRoute>
+              <AdminAnnouncementManage />
             </PrivateRoute>
           }
         />

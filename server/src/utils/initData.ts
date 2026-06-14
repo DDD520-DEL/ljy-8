@@ -265,6 +265,69 @@ const sampleSkills = [
   },
 ];
 
+const sampleAnnouncements = [
+  {
+    id: 'announcement-1',
+    title: '关于小区自来水管道检修的通知',
+    content: '尊敬的业主：\n\n为保障小区供水系统正常运行，物业公司定于2026年6月18日（星期三）上午9:00-12:00对小区供水主管道进行例行检修。\n\n检修期间，1-6号楼将暂停供水，请各位业主提前做好储水准备。检修完成后将逐步恢复供水。\n\n如有任何疑问，请拨打物业热线：400-123-4567\n\n感谢您的理解与配合！\n\n阳光花园物业管理处\n2026年6月14日',
+    category: 'water_electricity' as const,
+    priority: 'important' as const,
+    publisherId: 'user-admin',
+    status: 'published' as const,
+    viewCount: 128,
+    createdAt: '2026-06-14T08:00:00.000Z',
+    updatedAt: '2026-06-14T08:00:00.000Z',
+  },
+  {
+    id: 'announcement-2',
+    title: '2026年夏季社区运动会报名开始',
+    content: '亲爱的邻居们：\n\n为活跃社区文化生活，增进邻里交流，阳光花园社区将于2026年7月6日-7日举办"邻里一家亲"夏季运动会。\n\n比赛项目：\n🏸 羽毛球赛（男女单打、混合双打）\n🏃 趣味接力赛（家庭组）\n♟️ 象棋比赛\n🎯 投篮比赛\n\n报名时间：即日起至6月25日\n报名地点：社区服务中心一楼大厅\n\n奖项设置：各项目前三名可获得精美礼品，所有参与者均有纪念品。\n\n让我们一起运动起来，共享健康生活！\n\n阳光花园社区居委会\n2026年6月12日',
+    category: 'community_activity' as const,
+    priority: 'normal' as const,
+    publisherId: 'user-admin',
+    status: 'published' as const,
+    viewCount: 256,
+    createdAt: '2026-06-12T10:30:00.000Z',
+    updatedAt: '2026-06-12T10:30:00.000Z',
+  },
+  {
+    id: 'announcement-3',
+    title: '【紧急通知】电梯年度安全检测',
+    content: '各位业主：\n\n根据《特种设备安全监察条例》要求，小区电梯将于2026年6月16日进行年度安全检测。\n\n检测时间安排：\n- 1号楼电梯：6月16日 8:00-10:00\n- 2号楼电梯：6月16日 10:00-12:00\n- 3号楼电梯：6月16日 14:00-16:00\n- 4号楼电梯：6月16日 16:00-18:00\n\n检测期间电梯将暂停使用，请高层住户提前做好出行安排。检测完成后立即恢复运行。\n\n给您带来的不便，敬请谅解！\n\n物业24小时值班电话：400-123-4567\n\n阳光花园物业管理处\n2026年6月14日',
+    category: 'property' as const,
+    priority: 'urgent' as const,
+    publisherId: 'user-admin',
+    status: 'published' as const,
+    viewCount: 342,
+    createdAt: '2026-06-14T09:15:00.000Z',
+    updatedAt: '2026-06-14T09:15:00.000Z',
+  },
+  {
+    id: 'announcement-4',
+    title: '关于小区垃圾分类投放时间调整的通知',
+    content: '尊敬的业主：\n\n为进一步提升小区环境质量，配合城市垃圾分类工作要求，自2026年7月1日起，小区垃圾分类投放时间调整如下：\n\n⏰ 投放时间：\n- 早间：7:00-9:00\n- 晚间：18:00-20:00\n\n📍 投放地点：\n各单元楼下智能垃圾分类箱\n\n请各位业主自觉遵守投放时间，将垃圾正确分类投放。物业将在调整初期安排志愿者进行现场指导。\n\n垃圾分类，从我做起！共建美好家园！\n\n阳光花园社区居委会\n2026年6月10日',
+    category: 'property' as const,
+    priority: 'normal' as const,
+    publisherId: 'user-admin',
+    status: 'published' as const,
+    viewCount: 189,
+    createdAt: '2026-06-10T14:00:00.000Z',
+    updatedAt: '2026-06-10T14:00:00.000Z',
+  },
+  {
+    id: 'announcement-5',
+    title: '6月18日全小区停电检修通知',
+    content: '尊敬的业主：\n\n接供电部门通知，为确保夏季用电高峰期间电网安全运行，将于2026年6月18日对小区供电设施进行全面检修。\n\n🕐 停电时间：\n2026年6月18日 22:00 - 次日6:00\n\n🏢 停电范围：\n阳光花园小区全区域\n\n⚠️ 注意事项：\n1. 请提前关闭家中电器设备电源，避免送电时损坏\n2. 冰箱、冰柜尽量减少开门次数\n3. 请准备好手电筒、蜡烛等应急照明设备\n4. 电梯将在停电前10分钟停止运行\n\n预计6月19日6:00恢复供电，如有特殊情况将另行通知。\n\n给您带来的不便，敬请谅解！\n\n供电服务热线：95598\n物业值班电话：400-123-4567\n\n阳光花园物业管理处\n2026年6月13日',
+    category: 'water_electricity' as const,
+    priority: 'urgent' as const,
+    publisherId: 'user-admin',
+    status: 'published' as const,
+    viewCount: 456,
+    createdAt: '2026-06-13T16:45:00.000Z',
+    updatedAt: '2026-06-13T16:45:00.000Z',
+  },
+];
+
 const sampleExchangeItems = [
   {
     id: 'ex-item-1',
@@ -390,6 +453,7 @@ export function initializeSampleData() {
     items: sampleItems,
     skills: sampleSkills,
     exchangeItems: sampleExchangeItems,
+    announcements: sampleAnnouncements,
     borrowOrders: [],
     serviceOrders: [],
     exchangeRecords: [],
@@ -408,6 +472,7 @@ export function initializeSampleData() {
   console.log('   - 物品：' + sampleItems.length + ' 个');
   console.log('   - 技能：' + sampleSkills.length + ' 个');
   console.log('   - 兑换商品：' + sampleExchangeItems.length + ' 个');
+  console.log('   - 社区公告：' + sampleAnnouncements.length + ' 条');
   console.log('');
   console.log('📋 测试账号：');
   console.log('   管理员：admin@example.com / admin123');

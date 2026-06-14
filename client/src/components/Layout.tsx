@@ -84,6 +84,7 @@ function Layout() {
 
   const navItems = [
     { path: '/', label: '首页' },
+    { path: '/announcements', label: '社区公告' },
     { path: '/neighborhood', label: '邻里圈' },
     { path: '/items', label: '物品共享' },
     { path: '/skills', label: '技能交换' },
@@ -116,6 +117,9 @@ function Layout() {
                   <>
                     <Link to="/admin/dashboard" className="nav-link">
                       📊 数据看板
+                    </Link>
+                    <Link to="/admin/announcements" className="nav-link">
+                      📢 公告管理
                     </Link>
                     <Link to="/admin/shop" className="nav-link">
                       🏪 商城管理

@@ -249,4 +249,28 @@ export const exchangeApi = {
   getExchangeStats: () => request('/exchange/admin/stats'),
 };
 
+export const announcementApi = {
+  getLatestAnnouncements: (limit?: number) =>
+    request('/announcements/latest', { params: limit ? { limit } : {} }),
+  getAnnouncements: (params?: {
+    page?: number;
+    pageSize?: number;
+    category?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) => request('/announcements/list', { params }),
+  getAnnouncementById: (id: string) => request(`/announcements/${id}`),
+  getAdminAnnouncements: (params?: {
+    page?: number;
+    pageSize?: number;
+    category?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) => request('/announcements/admin/list', { params }),
+  createAnnouncement: (data: any) =>
+    request('/announcements', { method: 'POST', data }),
+  updateAnnouncement: (id: string, data: any) =>
+    request(`/announcements/${id}`, { method: 'PUT', data }),
+  deleteAnnouncement: (id: string) =>
+    request(`/announcements/${id}`, { method: 'DELETE' }),
+};
+
 export default api;
