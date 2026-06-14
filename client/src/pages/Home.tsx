@@ -68,6 +68,9 @@ function Home() {
               <Link to="/items" className="btn btn-primary btn-lg">
                 浏览物品
               </Link>
+              <Link to="/donations" className="btn btn-success btn-lg">
+                🎁 免费捐赠
+              </Link>
               <Link to="/skills" className="btn btn-secondary btn-lg">
                 发现技能
               </Link>
@@ -150,6 +153,39 @@ function Home() {
                 <span className="category-name">{cat.name}</span>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section donation-promotion">
+        <div className="container">
+          <div className="donation-banner">
+            <div className="donation-banner-content">
+              <h2>🎁 免费捐赠专区</h2>
+              <p>将闲置物品免费捐赠给有需要的邻居，传递爱心的同时还能获得信用分奖励！</p>
+              <div className="donation-stats">
+                <div className="donation-stat">
+                  <span className="donation-stat-value">+5</span>
+                  <span className="donation-stat-label">捐赠者信用分</span>
+                </div>
+                <div className="donation-stat-divider">+</div>
+                <div className="donation-stat">
+                  <span className="donation-stat-value">+3</span>
+                  <span className="donation-stat-label">领取者信用分</span>
+                </div>
+              </div>
+              <div className="donation-banner-buttons">
+                <Link to="/donations" className="btn btn-success btn-lg">
+                  浏览捐赠物品
+                </Link>
+                <Link to="/publish/donation" className="btn btn-outline-success btn-lg">
+                  我要捐赠
+                </Link>
+              </div>
+            </div>
+            <div className="donation-banner-icon">
+              🎉
+            </div>
           </div>
         </div>
       </section>
@@ -256,6 +292,11 @@ function Home() {
               <p>用时间币交换技能，让时间更有价值</p>
             </div>
             <div className="feature-card">
+              <div className="feature-icon">🎁</div>
+              <h3>爱心捐赠</h3>
+              <p>免费捐赠闲置物品，传递爱心获得奖励</p>
+            </div>
+            <div className="feature-card">
               <div className="feature-icon">🏠</div>
               <h3>邻里互助</h3>
               <p>认识身边的邻居，共建温暖社区</p>
@@ -270,6 +311,143 @@ function Home() {
       </section>
 
       <style>{`
+        .btn-success {
+          background: #52c41a;
+          color: white;
+          border: none;
+          padding: 10px 24px;
+          border-radius: 6px;
+          text-decoration: none;
+          font-size: 14px;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .btn-success:hover {
+          background: #73d13d;
+        }
+        .btn-outline-success {
+          background: transparent;
+          color: #52c41a;
+          border: 2px solid #52c41a;
+          padding: 10px 24px;
+          border-radius: 6px;
+          text-decoration: none;
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .btn-outline-success:hover {
+          background: #52c41a;
+          color: white;
+        }
+        .donation-promotion {
+          background: #f6ffed;
+          padding: 60px 0;
+        }
+        .donation-banner {
+          background: linear-gradient(135deg, #52c41a 0%, #95de64 100%);
+          border-radius: 20px;
+          padding: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 40px;
+          color: white;
+          overflow: hidden;
+          position: relative;
+        }
+        .donation-banner::before {
+          content: '';
+          position: absolute;
+          top: -50px;
+          right: -50px;
+          width: 200px;
+          height: 200px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 50%;
+        }
+        .donation-banner::after {
+          content: '';
+          position: absolute;
+          bottom: -80px;
+          left: 50%;
+          width: 250px;
+          height: 250px;
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 50%;
+        }
+        .donation-banner-content {
+          flex: 1;
+          position: relative;
+          z-index: 1;
+        }
+        .donation-banner-content h2 {
+          font-size: 32px;
+          margin-bottom: 16px;
+        }
+        .donation-banner-content p {
+          font-size: 16px;
+          opacity: 0.95;
+          margin-bottom: 24px;
+          max-width: 500px;
+          line-height: 1.6;
+        }
+        .donation-stats {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+        .donation-stat {
+          background: rgba(255, 255, 255, 0.2);
+          padding: 12px 24px;
+          border-radius: 12px;
+          text-align: center;
+          backdrop-filter: blur(10px);
+        }
+        .donation-stat-value {
+          display: block;
+          font-size: 28px;
+          font-weight: 700;
+        }
+        .donation-stat-label {
+          font-size: 13px;
+          opacity: 0.9;
+        }
+        .donation-stat-divider {
+          font-size: 32px;
+          font-weight: 700;
+        }
+        .donation-banner-buttons {
+          display: flex;
+          gap: 12px;
+        }
+        .donation-banner-buttons .btn-success {
+          background: white;
+          color: #52c41a;
+        }
+        .donation-banner-buttons .btn-success:hover {
+          background: #f6ffed;
+        }
+        .donation-banner-buttons .btn-outline-success {
+          border-color: white;
+          color: white;
+        }
+        .donation-banner-buttons .btn-outline-success:hover {
+          background: white;
+          color: #52c41a;
+        }
+        .donation-banner-icon {
+          font-size: 120px;
+          opacity: 0.9;
+          animation: bounce 2s ease-in-out infinite;
+          position: relative;
+          z-index: 1;
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-20px); }
+        }
         .announcements-section {
           background: white;
         }
@@ -566,11 +744,51 @@ function Home() {
           .hero-title {
             font-size: 32px;
           }
+          .hero-subtitle {
+            font-size: 16px;
+          }
+          .hero-buttons {
+            flex-direction: column;
+            gap: 12px;
+          }
+          .hero-buttons .btn {
+            width: 100%;
+          }
           .hero-stats {
             gap: 30px;
           }
           .stat-number {
             font-size: 24px;
+          }
+          .donation-banner {
+            flex-direction: column;
+            text-align: center;
+            padding: 32px 24px;
+          }
+          .donation-banner-content h2 {
+            font-size: 24px;
+          }
+          .donation-banner-content p {
+            font-size: 14px;
+          }
+          .donation-stats {
+            justify-content: center;
+            flex-wrap: wrap;
+          }
+          .donation-stat {
+            padding: 8px 16px;
+          }
+          .donation-stat-value {
+            font-size: 22px;
+          }
+          .donation-banner-buttons {
+            flex-direction: column;
+          }
+          .donation-banner-buttons .btn {
+            width: 100%;
+          }
+          .donation-banner-icon {
+            font-size: 80px;
           }
           .category-grid,
           .item-grid,

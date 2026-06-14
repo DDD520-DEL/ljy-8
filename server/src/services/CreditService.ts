@@ -13,6 +13,17 @@ export class CreditService {
     });
   }
 
+  public rewardCredit(userId: string, points: number, reason: string): void {
+    const user = userRepository.findById(userId);
+    if (!user) return;
+
+    const newScore = Math.min(100, Math.max(0, user.creditScore + points));
+    userRepository.update(userId, {
+      creditScore: newScore,
+      creditLevel: getCreditLevel(newScore),
+    });
+  }
+
   public getCreditInfo(userId: string) {
     const user = userRepository.findById(userId);
     if (!user) return null;

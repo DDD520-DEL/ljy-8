@@ -126,14 +126,16 @@ export class ItemRepository {
     };
   }
 
-  public create(itemData: Omit<Item, 'id' | 'createdAt' | 'viewCount' | 'status' | 'borrowCount' | 'minCreditLevel'> & { minCreditLevel?: string }): Item {
+  public create(itemData: Omit<Item, 'id' | 'createdAt' | 'viewCount' | 'status' | 'borrowCount' | 'donateCount' | 'minCreditLevel' | 'isDonation'> & { minCreditLevel?: string; isDonation?: boolean }): Item {
     const item: Item = {
       id: generateId(),
       ...itemData,
       minCreditLevel: itemData.minCreditLevel || 'B',
+      isDonation: itemData.isDonation || false,
       status: 'available',
       viewCount: 0,
       borrowCount: 0,
+      donateCount: 0,
       createdAt: getCurrentTime(),
     };
     return db.insert<Item>(this.collection, item);
@@ -154,6 +156,13 @@ export class ItemRepository {
     const item = this.findById(id);
     if (item) {
       this.update(id, { borrowCount: (item.borrowCount || 0) + 1 });
+    }
+  }
+
+  public incrementDonateCount(id: string): void {
+    const item = this.findById(id);
+    if (item) {
+      this.update(id, { donateCount: (item.donateCount || 0) + 1 });
     }
   }
 

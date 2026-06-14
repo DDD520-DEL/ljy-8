@@ -21,10 +21,12 @@ export interface Item {
   borrowRules: string;
   maxBorrowDays: number;
   minCreditLevel: string;
-  status: 'available' | 'borrowed' | 'maintenance';
+  status: 'available' | 'borrowed' | 'maintenance' | 'donated';
+  isDonation: boolean;
   createdAt: string;
   viewCount: number;
   borrowCount: number;
+  donateCount: number;
 }
 
 export type ItemSortField = 'createdAt' | 'borrowCount' | 'deposit' | 'viewCount';
@@ -327,10 +329,12 @@ export type NotificationType =
   | 'order_status'
   | 'dispute_status'
   | 'new_review'
+  | 'review_reply'
   | 'queue_turn'
   | 'queue_expired'
   | 'queue_cancelled'
   | 'new_skill_from_followed'
+  | 'donation_status'
   | 'system';
 
 export type DepositTransactionType = 'payment' | 'refund' | 'deduction';
@@ -407,7 +411,7 @@ export interface Notification {
   title: string;
   message: string;
   relatedId?: string;
-  relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue' | 'skill';
+  relatedType?: 'borrow_order' | 'service_order' | 'dispute' | 'item' | 'queue' | 'skill' | 'donation';
   read: boolean;
   createdAt: string;
 }
@@ -507,4 +511,58 @@ export interface DashboardStats {
     itemCategories: Record<string, number>;
     skillCategories: Record<string, number>;
   };
+}
+
+export type DonationStatus = 'available' | 'pending_approval' | 'approved' | 'meeting' | 'completed' | 'cancelled';
+
+export interface Donation {
+  id: string;
+  itemId: string;
+  donorId: string;
+  recipientId?: string;
+  applicantIds: string[];
+  status: DonationStatus;
+  meetLocation?: string;
+  meetTime?: string;
+  donorNotes?: string;
+  recipientNotes?: string;
+  createdAt: string;
+  approvedAt?: string;
+  completedAt?: string;
+  cancelledAt?: string;
+}
+
+export interface DonationWithDetails extends Donation {
+  item: ItemWithOwner;
+  donor: PublicUser;
+  recipient?: PublicUser;
+  applicants: PublicUser[];
+}
+
+export interface CreateDonationRequest {
+  itemId: string;
+  donorNotes?: string;
+}
+
+export interface ApproveDonationRequest {
+  recipientId: string;
+  meetLocation: string;
+  meetTime: string;
+}
+
+export interface DonationFilterParams {
+  category?: string;
+  keyword?: string;
+  userNeighborhood?: string;
+  status?: DonationStatus;
+}
+
+export interface DonationSortParams {
+  sortBy?: 'createdAt' | 'viewCount';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface DonationPaginationParams {
+  page?: number;
+  pageSize?: number;
 }

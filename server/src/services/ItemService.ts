@@ -35,7 +35,7 @@ export class ItemService {
     return items.map(item => itemRepository.toItemWithOwner(item));
   }
 
-  public createItem(ownerId: string, itemData: Omit<Item, 'id' | 'ownerId' | 'createdAt' | 'viewCount' | 'status' | 'borrowCount' | 'minCreditLevel'> & { minCreditLevel?: string }): ItemWithOwner {
+  public createItem(ownerId: string, itemData: Omit<Item, 'id' | 'ownerId' | 'createdAt' | 'viewCount' | 'status' | 'borrowCount' | 'donateCount' | 'minCreditLevel' | 'isDonation'> & { minCreditLevel?: string; isDonation?: boolean }): ItemWithOwner {
     const item = itemRepository.create({ ...itemData, ownerId });
     return itemRepository.toItemWithOwner(item);
   }

@@ -24,6 +24,10 @@ import AdminShopManage from './pages/AdminShopManage';
 import AnnouncementsList from './pages/AnnouncementsList';
 import AnnouncementDetail from './pages/AnnouncementDetail';
 import AdminAnnouncementManage from './pages/AdminAnnouncementManage';
+import Donations from './pages/Donations';
+import DonationDetail from './pages/DonationDetail';
+import PublishDonation from './pages/PublishDonation';
+import MyDonations from './pages/MyDonations';
 import { useAuthStore } from './store/authStore';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -72,6 +76,24 @@ function App() {
           element={
             <PrivateRoute>
               <PublishSkill />
+            </PrivateRoute>
+          }
+        />
+        <Route path="donations" element={<Donations />} />
+        <Route path="donations/:id" element={<DonationDetail />} />
+        <Route
+          path="publish/donation"
+          element={
+            <PrivateRoute>
+              <PublishDonation />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="my-donations"
+          element={
+            <PrivateRoute>
+              <MyDonations />
             </PrivateRoute>
           }
         />

@@ -132,6 +132,34 @@ export class NotificationService {
       message,
     });
   }
+
+  public sendDonationStatusNotification(
+    userId: string,
+    donationId: string,
+    status: string,
+    itemTitle: string
+  ): Notification {
+    const statusText: Record<string, string> = {
+      available: '待领取',
+      pending_approval: '有新的申请',
+      approved: '申请已通过',
+      rejected: '申请未通过',
+      meeting: '待交接',
+      completed: '已完成',
+      cancelled: '已取消',
+    };
+
+    const title = '捐赠状态更新';
+    const message = `您的捐赠「${itemTitle}」状态已更新为：${statusText[status] || status}`;
+    return this.sendNotification({
+      userId,
+      type: 'donation_status',
+      title,
+      message,
+      relatedId: donationId,
+      relatedType: 'item',
+    });
+  }
 }
 
 export const notificationService = new NotificationService();

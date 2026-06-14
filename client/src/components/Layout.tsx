@@ -60,6 +60,8 @@ function Layout() {
         return '❌';
       case 'system':
         return '📢';
+      case 'donation_status':
+        return '🎁';
       default:
         return '📧';
     }
@@ -77,6 +79,8 @@ function Layout() {
       navigate(`/disputes/${notification.relatedId}`);
     } else if (notification.relatedType === 'item') {
       navigate(`/items/${notification.relatedId}`);
+    } else if (notification.relatedType === 'donation') {
+      navigate(`/donations/${notification.relatedId}`);
     } else {
       navigate('/notifications');
     }
@@ -87,6 +91,7 @@ function Layout() {
     { path: '/announcements', label: '社区公告' },
     { path: '/neighborhood', label: '邻里圈' },
     { path: '/items', label: '物品共享' },
+    { path: '/donations', label: '免费捐赠' },
     { path: '/skills', label: '技能交换' },
     { path: '/shop', label: '兑换商城' },
   ];
@@ -131,6 +136,9 @@ function Layout() {
                 </Link>
                 <Link to="/my-exchanges" className="nav-link">
                   🎁 我的兑换
+                </Link>
+                <Link to="/my-donations" className="nav-link">
+                  🎀 我的捐赠
                 </Link>
                 <Link to="/disputes" className="nav-link">
                   纠纷中心

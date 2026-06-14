@@ -16,6 +16,7 @@ import favoriteRoutes from './routes/favorites';
 import followRoutes from './routes/follows';
 import exchangeRoutes from './routes/exchange';
 import announcementRoutes from './routes/announcements';
+import donationRoutes from './routes/donations';
 import { db } from './utils/db';
 import { initializeSampleData } from './utils/initData';
 import { queueService } from './services/QueueService';
@@ -46,6 +47,7 @@ app.use('/api/favorites', favoriteRoutes);
 app.use('/api/follows', followRoutes);
 app.use('/api/exchange', exchangeRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/donations', donationRoutes);
 
 app.get('/api/health', (_req: express.Request, res: express.Response) => {
   res.json({ success: true, message: '邻里共享平台服务运行中' });

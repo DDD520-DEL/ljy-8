@@ -273,4 +273,35 @@ export const announcementApi = {
     request(`/announcements/${id}`, { method: 'DELETE' }),
 };
 
+export const donationApi = {
+  getDonations: (params?: {
+    category?: string;
+    keyword?: string;
+    userNeighborhood?: string;
+    status?: string;
+    sortBy?: string;
+    sortOrder?: string;
+    page?: number;
+    pageSize?: number;
+  }) => request('/donations', { params }),
+  getDonationById: (id: string) => request(`/donations/${id}`),
+  getMyDonations: () => request('/donations/my'),
+  getMyApplications: () => request('/donations/my/applications'),
+  getMyReceivedDonations: () => request('/donations/my/received'),
+  createDonation: (data: { itemId: string; donorNotes?: string }) =>
+    request('/donations', { method: 'POST', data }),
+  applyForDonation: (id: string) =>
+    request(`/donations/${id}/apply`, { method: 'POST' }),
+  approveApplicant: (id: string, data: { recipientId: string; meetLocation: string; meetTime: string }) =>
+    request(`/donations/${id}/approve`, { method: 'PUT', data }),
+  startMeeting: (id: string) =>
+    request(`/donations/${id}/start-meeting`, { method: 'PUT' }),
+  completeDonation: (id: string) =>
+    request(`/donations/${id}/complete`, { method: 'PUT' }),
+  cancelDonation: (id: string, reason?: string) =>
+    request(`/donations/${id}/cancel`, { method: 'PUT', data: { reason } }),
+  cancelApplication: (id: string) =>
+    request(`/donations/${id}/cancel-application`, { method: 'PUT' }),
+};
+
 export default api;
