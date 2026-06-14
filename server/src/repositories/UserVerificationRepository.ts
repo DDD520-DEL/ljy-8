@@ -15,7 +15,14 @@ export class UserVerificationRepository {
   }
 
   public findByUserId(userId: string): UserVerification | undefined {
-    return db.findOne<UserVerification>(this.collection, (v) => v.userId === userId);
+    const verifications = db.findMany<UserVerification>(this.collection, (v) => v.userId === userId);
+    if (verifications.length === 0) return undefined;
+
+    const pending = verifications.find((v) => v.status === 'pending');
+    if (pending) return pending;
+
+    verifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return verifications[0];
   }
 
   public findPendingByUserId(userId: string): UserVerification | undefined {
