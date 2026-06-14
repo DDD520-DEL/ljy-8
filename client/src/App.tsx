@@ -40,6 +40,9 @@ import PublishActivity from './pages/PublishActivity';
 import MyActivities from './pages/MyActivities';
 import FavoriteFolders from './pages/FavoriteFolders';
 import FavoriteFolderDetail from './pages/FavoriteFolderDetail';
+import SubmitFeedback from './pages/SubmitFeedback';
+import MyFeedbacks from './pages/MyFeedbacks';
+import AdminFeedbackManage from './pages/AdminFeedbackManage';
 import { useAuthStore } from './store/authStore';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -257,6 +260,30 @@ function App() {
           element={
             <PrivateRoute>
               <AdminVerificationManage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="admin/feedback"
+          element={
+            <PrivateRoute>
+              <AdminFeedbackManage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="feedback/submit"
+          element={
+            <PrivateRoute>
+              <SubmitFeedback />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="my-feedbacks"
+          element={
+            <PrivateRoute>
+              <MyFeedbacks />
             </PrivateRoute>
           }
         />

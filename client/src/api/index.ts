@@ -415,4 +415,27 @@ export const activityApi = {
     request(`/activities/photos/${photoId}`, { method: 'DELETE' }),
 };
 
+export const feedbackApi = {
+  getMyFeedbacks: (params?: { type?: string; status?: string; keyword?: string }) =>
+    request('/feedbacks/my', { params }),
+  getAllFeedbacks: (params?: {
+    type?: string;
+    status?: string;
+    keyword?: string;
+    page?: number;
+    pageSize?: number;
+  }) => request('/feedbacks/all', { params }),
+  getFeedbackById: (id: string) => request(`/feedbacks/${id}`),
+  createFeedback: (data: {
+    type: string;
+    title: string;
+    description: string;
+    images?: string[];
+    contact?: string;
+  }) => request('/feedbacks', { method: 'POST', data }),
+  updateFeedbackStatus: (id: string, data: { status: string; adminReply?: string }) =>
+    request(`/feedbacks/${id}/status`, { method: 'PUT', data }),
+  getStatistics: () => request('/feedbacks/statistics'),
+};
+
 export default api;

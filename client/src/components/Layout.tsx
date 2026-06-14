@@ -161,6 +161,9 @@ function Layout() {
                     <Link to="/admin/shop" className="nav-link">
                       🏪 商城管理
                     </Link>
+                    <Link to="/admin/feedback" className="nav-link">
+                      💬 反馈管理
+                    </Link>
                   </>
                 )}
                 <Link to="/orders" className="nav-link">
@@ -180,6 +183,9 @@ function Layout() {
                 </Link>
                 <Link to="/disputes" className="nav-link">
                   纠纷中心
+                </Link>
+                <Link to="/my-feedbacks" className="nav-link">
+                  💬 我的反馈
                 </Link>
                 <div className="notification-wrapper">
                   <button

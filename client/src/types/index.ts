@@ -844,3 +844,48 @@ export interface UploadActivityPhotoRequest {
   imageUrl: string;
   description?: string;
 }
+
+export type FeedbackType = 'suggestion' | 'bug' | 'experience';
+export type FeedbackStatus = 'pending' | 'processing' | 'resolved' | 'rejected';
+
+export interface Feedback {
+  id: string;
+  userId: string;
+  type: FeedbackType;
+  title: string;
+  description: string;
+  images?: string[];
+  contact?: string;
+  status: FeedbackStatus;
+  adminReply?: string;
+  handledBy?: string;
+  handledAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FeedbackWithUser extends Feedback {
+  user: PublicUser;
+  handler?: PublicUser;
+}
+
+export interface CreateFeedbackRequest {
+  type: FeedbackType;
+  title: string;
+  description: string;
+  images?: string[];
+  contact?: string;
+}
+
+export interface UpdateFeedbackStatusRequest {
+  status: FeedbackStatus;
+  adminReply?: string;
+}
+
+export interface FeedbackFilterParams {
+  type?: FeedbackType;
+  status?: FeedbackStatus;
+  keyword?: string;
+  page?: number;
+  pageSize?: number;
+}
