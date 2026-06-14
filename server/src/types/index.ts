@@ -400,12 +400,53 @@ export interface TimeCoinTransaction {
   id: string;
   userId: string;
   relatedId: string;
-  relatedType: 'borrow_order' | 'service_order' | 'system';
+  relatedType: 'borrow_order' | 'service_order' | 'system' | 'exchange';
   type: TimeCoinTransactionType;
   amount: number;
   source: string;
   description: string;
   createdAt: string;
+}
+
+export type ExchangeItemCategory = 'physical' | 'service_voucher';
+export type ExchangeItemStatus = 'active' | 'inactive' | 'sold_out';
+export type ExchangeRecordStatus = 'pending' | 'completed' | 'cancelled';
+
+export interface ExchangeItem {
+  id: string;
+  name: string;
+  description: string;
+  category: ExchangeItemCategory;
+  images: string[];
+  coinPrice: number;
+  stock: number;
+  soldCount: number;
+  status: ExchangeItemStatus;
+  terms?: string;
+  validDays?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ExchangeRecord {
+  id: string;
+  userId: string;
+  itemId: string;
+  itemName: string;
+  itemImage: string;
+  coinPrice: number;
+  quantity: number;
+  totalCoins: number;
+  status: ExchangeRecordStatus;
+  redeemedAt?: string;
+  voucherCode?: string;
+  remark?: string;
+  createdAt: string;
+}
+
+export interface ExchangeRecordWithItem extends ExchangeRecord {
+  item?: ExchangeItem;
+  user?: PublicUser;
 }
 
 export interface ItemFilterParams {

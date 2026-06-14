@@ -224,4 +224,29 @@ export const followApi = {
   getFollowingLatestSkills: () => request('/follows/latest-skills'),
 };
 
+export const exchangeApi = {
+  getExchangeItems: (params?: { category?: string; keyword?: string }) =>
+    request('/exchange/items', { params }),
+  getExchangeItemById: (id: string) => request(`/exchange/items/${id}`),
+  exchangeItem: (data: { itemId: string; quantity?: number; remark?: string }) =>
+    request('/exchange/exchange', { method: 'POST', data }),
+  getMyExchangeRecords: () => request('/exchange/records/my'),
+  getExchangeRecordDetail: (id: string) => request(`/exchange/records/${id}`),
+  cancelExchange: (id: string) =>
+    request(`/exchange/records/${id}/cancel`, { method: 'PUT' }),
+  getAllExchangeItems: () => request('/exchange/admin/items'),
+  createExchangeItem: (data: any) =>
+    request('/exchange/admin/items', { method: 'POST', data }),
+  updateExchangeItem: (id: string, data: any) =>
+    request(`/exchange/admin/items/${id}`, { method: 'PUT', data }),
+  deleteExchangeItem: (id: string) =>
+    request(`/exchange/admin/items/${id}`, { method: 'DELETE' }),
+  restockItem: (id: string, quantity: number) =>
+    request(`/exchange/admin/items/${id}/restock`, { method: 'PUT', data: { quantity } }),
+  getAllExchangeRecords: () => request('/exchange/admin/records'),
+  completeExchange: (id: string) =>
+    request(`/exchange/admin/records/${id}/complete`, { method: 'PUT' }),
+  getExchangeStats: () => request('/exchange/admin/stats'),
+};
+
 export default api;

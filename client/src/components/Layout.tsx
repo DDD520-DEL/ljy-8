@@ -87,6 +87,7 @@ function Layout() {
     { path: '/neighborhood', label: '邻里圈' },
     { path: '/items', label: '物品共享' },
     { path: '/skills', label: '技能交换' },
+    { path: '/shop', label: '兑换商城' },
   ];
 
   return (
@@ -112,12 +113,20 @@ function Layout() {
             {isAuthenticated ? (
               <div className="user-menu">
                 {user?.role === 'admin' && (
-                  <Link to="/admin/dashboard" className="nav-link">
-                    📊 数据看板
-                  </Link>
+                  <>
+                    <Link to="/admin/dashboard" className="nav-link">
+                      📊 数据看板
+                    </Link>
+                    <Link to="/admin/shop" className="nav-link">
+                      🏪 商城管理
+                    </Link>
+                  </>
                 )}
                 <Link to="/orders" className="nav-link">
                   我的订单
+                </Link>
+                <Link to="/my-exchanges" className="nav-link">
+                  🎁 我的兑换
                 </Link>
                 <Link to="/disputes" className="nav-link">
                   纠纷中心

@@ -18,6 +18,9 @@ import DisputeDetail from './pages/DisputeDetail';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
 import AdminDashboard from './pages/AdminDashboard';
+import Shop from './pages/Shop';
+import MyExchanges from './pages/MyExchanges';
+import AdminShopManage from './pages/AdminShopManage';
 import { useAuthStore } from './store/authStore';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -32,6 +35,15 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
+        <Route path="shop" element={<Shop />} />
+        <Route
+          path="my-exchanges"
+          element={
+            <PrivateRoute>
+              <MyExchanges />
+            </PrivateRoute>
+          }
+        />
         <Route path="items" element={<Items />} />
         <Route path="items/:id" element={<ItemDetail />} />
         <Route
@@ -129,6 +141,14 @@ function App() {
           element={
             <PrivateRoute>
               <AdminDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="admin/shop"
+          element={
+            <PrivateRoute>
+              <AdminShopManage />
             </PrivateRoute>
           }
         />
