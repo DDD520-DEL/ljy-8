@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { itemService } from '../services/ItemService';
 import { AuthRequest } from '../utils/auth';
+import { ItemFilterParams, ItemSortParams, ItemPaginationParams, ItemSortField, ItemSortOrder } from '../types';
 
 export class ItemController {
   public async getItems(req: Request, res: Response): Promise<void> {
@@ -11,6 +12,49 @@ export class ItemController {
         keyword as string | undefined
       );
       res.json({ success: true, data: items });
+    } catch (err: any) {
+      res.status(400).json({ success: false, message: err.message });
+    }
+  }
+
+  public async searchItems(req: Request, res: Response): Promise<void> {
+    try {
+      const {
+        category,
+        keyword,
+        minDeposit,
+        maxDeposit,
+        minCreditLevel,
+        userNeighborhood,
+        status,
+        sortBy,
+        sortOrder,
+        page,
+        pageSize,
+      } = req.query;
+
+      const filters: ItemFilterParams = {
+        category: category as string | undefined,
+        keyword: keyword as string | undefined,
+        minDeposit: minDeposit ? Number(minDeposit) : undefined,
+        maxDeposit: maxDeposit ? Number(maxDeposit) : undefined,
+        minCreditLevel: minCreditLevel as string | undefined,
+        userNeighborhood: userNeighborhood as string | undefined,
+        status: status as string | undefined,
+      };
+
+      const sort: ItemSortParams = {
+        sortBy: sortBy as ItemSortField | undefined,
+        sortOrder: sortOrder as ItemSortOrder | undefined,
+      };
+
+      const pagination: ItemPaginationParams = {
+        page: page ? Number(page) : undefined,
+        pageSize: pageSize ? Number(pageSize) : undefined,
+      };
+
+      const result = itemService.searchItems(filters, sort, pagination);
+      res.json({ success: true, data: result });
     } catch (err: any) {
       res.status(400).json({ success: false, message: err.message });
     }

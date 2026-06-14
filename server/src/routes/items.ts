@@ -5,6 +5,7 @@ import { authMiddleware } from '../utils/auth';
 const router = Router();
 
 router.get('/', itemController.getItems.bind(itemController));
+router.get('/search', itemController.searchItems.bind(itemController));
 router.get('/my', authMiddleware, itemController.getMyItems.bind(itemController));
 router.get('/:id', itemController.getItemById.bind(itemController));
 router.post('/', authMiddleware, itemController.createItem.bind(itemController));

@@ -11,12 +11,20 @@ function PublishItem() {
     deposit: 0,
     borrowRules: '',
     maxBorrowDays: 7,
+    minCreditLevel: 'B',
     images: [] as string[],
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const categories = ['工具', '家电', '运动器材', '图书', '其他'];
+  const creditLevelOptions = [
+    { value: 'S', label: 'S级 - 信用极好' },
+    { value: 'A', label: 'A级 - 信用优秀' },
+    { value: 'B', label: 'B级 - 信用良好' },
+    { value: 'C', label: 'C级 - 信用一般' },
+    { value: 'D', label: 'D级 - 不限信用' },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +109,22 @@ function PublishItem() {
           </div>
 
           <div className="form-group">
+            <label className="form-label">最低信用等级要求</label>
+            <select
+              className="form-select"
+              value={formData.minCreditLevel}
+              onChange={(e) => setFormData({ ...formData, minCreditLevel: e.target.value })}
+            >
+              {creditLevelOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="form-hint">只有达到或超过该信用等级的用户才能借用您的物品</p>
+          </div>
+
+          <div className="form-group">
             <label className="form-label">物品描述 *</label>
             <textarea
               className="form-textarea"
@@ -175,6 +199,11 @@ function PublishItem() {
           margin-top: 24px;
           padding-top: 20px;
           border-top: 1px solid #f0f0f0;
+        }
+        .form-hint {
+          font-size: 12px;
+          color: #999;
+          margin-top: 6px;
         }
         @media (max-width: 768px) {
           .form-card {

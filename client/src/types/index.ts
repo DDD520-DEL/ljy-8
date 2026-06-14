@@ -20,9 +20,32 @@ export interface Item {
   deposit: number;
   borrowRules: string;
   maxBorrowDays: number;
+  minCreditLevel: string;
   status: 'available' | 'borrowed' | 'maintenance';
   createdAt: string;
   viewCount: number;
+  borrowCount: number;
+}
+
+export type ItemSortField = 'createdAt' | 'borrowCount' | 'deposit' | 'viewCount';
+export type ItemSortOrder = 'asc' | 'desc';
+
+export interface ItemFilterParams {
+  category?: string;
+  keyword?: string;
+  minDeposit?: number;
+  maxDeposit?: number;
+  minCreditLevel?: string;
+  userNeighborhood?: string;
+  status?: string;
+}
+
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export interface ItemWithOwner extends Item {

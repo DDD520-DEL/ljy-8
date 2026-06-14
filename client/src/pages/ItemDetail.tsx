@@ -258,6 +258,16 @@ function ItemDetail() {
               <span className="detail-value">{item.maxBorrowDays} 天</span>
             </div>
             <div className="detail-item">
+              <span className="detail-label">最低信用：</span>
+              <span className={`detail-value credit-badge level-${item.minCreditLevel || 'B'}`}>
+                {item.minCreditLevel || 'B'}级
+              </span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">借用热度：</span>
+              <span className="detail-value">🔥 {item.borrowCount || 0} 次</span>
+            </div>
+            <div className="detail-item">
               <span className="detail-label">所在小区：</span>
               <span className="detail-value">{item.owner.neighborhood}</span>
             </div>
@@ -699,6 +709,18 @@ function ItemDetail() {
         .detail-value {
           color: #333;
         }
+        .credit-badge {
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 600;
+          display: inline-block;
+        }
+        .credit-badge.level-S { background: #fff1f0; color: #f5222d; }
+        .credit-badge.level-A { background: #fff7e6; color: #fa8c16; }
+        .credit-badge.level-B { background: #f6ffed; color: #52c41a; }
+        .credit-badge.level-C { background: #e6f7ff; color: #1890ff; }
+        .credit-badge.level-D { background: #f5f5f5; color: #8c8c8c; }
         .item-section {
           margin-bottom: 20px;
         }

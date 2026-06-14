@@ -49,6 +49,19 @@ export const authApi = {
 export const itemApi = {
   getItems: (params?: { category?: string; keyword?: string }) =>
     request('/items', { params }),
+  searchItems: (params?: {
+    category?: string;
+    keyword?: string;
+    minDeposit?: number;
+    maxDeposit?: number;
+    minCreditLevel?: string;
+    userNeighborhood?: string;
+    status?: string;
+    sortBy?: string;
+    sortOrder?: string;
+    page?: number;
+    pageSize?: number;
+  }) => request('/items/search', { params }),
   getItemById: (id: string) => request(`/items/${id}`),
   getMyItems: () => request('/items/my'),
   createItem: (data: any) => request('/items', { method: 'POST', data }),

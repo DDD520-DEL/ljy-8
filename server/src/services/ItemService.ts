@@ -1,23 +1,26 @@
 import { itemRepository } from '../repositories/ItemRepository';
-import { Item, ItemWithOwner } from '../types';
+import { Item, ItemWithOwner, ItemFilterParams, ItemSortParams, ItemPaginationParams, PaginatedResult } from '../types';
 
 export class ItemService {
   public getItems(category?: string, keyword?: string): ItemWithOwner[] {
-    let items = itemRepository.findAll();
-    
-    if (category && category !== 'all') {
-      items = items.filter(item => item.category === category);
-    }
-    
-    if (keyword) {
-      const lowerKeyword = keyword.toLowerCase();
-      items = items.filter(item => 
-        item.title.toLowerCase().includes(lowerKeyword) ||
-        item.description.toLowerCase().includes(lowerKeyword)
-      );
-    }
-    
-    return items.map(item => itemRepository.toItemWithOwner(item));
+    const result = itemRepository.findWithFilters(
+      { category, keyword },
+      { sortBy: 'createdAt', sortOrder: 'desc' },
+      { page: 1, pageSize: 100 }
+    );
+    return result.items.map(item => itemRepository.toItemWithOwner(item));
+  }
+
+  public searchItems(
+    filters: ItemFilterParams,
+    sort: ItemSortParams,
+    pagination: ItemPaginationParams
+  ): PaginatedResult<ItemWithOwner> {
+    const result = itemRepository.findWithFilters(filters, sort, pagination);
+    return {
+      ...result,
+      items: result.items.map(item => itemRepository.toItemWithOwner(item)),
+    };
   }
 
   public getItemById(id: string): ItemWithOwner | null {
@@ -32,7 +35,7 @@ export class ItemService {
     return items.map(item => itemRepository.toItemWithOwner(item));
   }
 
-  public createItem(ownerId: string, itemData: Omit<Item, 'id' | 'ownerId' | 'createdAt' | 'viewCount' | 'status'>): ItemWithOwner {
+  public createItem(ownerId: string, itemData: Omit<Item, 'id' | 'ownerId' | 'createdAt' | 'viewCount' | 'status' | 'borrowCount' | 'minCreditLevel'> & { minCreditLevel?: string }): ItemWithOwner {
     const item = itemRepository.create({ ...itemData, ownerId });
     return itemRepository.toItemWithOwner(item);
   }
