@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { demandApi } from '../api';
+import { useAuthStore } from '../store/authStore';
 import type { DemandWithDetails, PaginatedResult } from '../types';
 
 type SortOption = {
@@ -68,6 +69,7 @@ function Demands() {
   const [result, setResult] = useState<PaginatedResult<DemandWithDetails> | null>(null);
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState('');
+  const { user } = useAuthStore();
 
   const typeParam = searchParams.get('type') || 'all';
   const categoryParam = searchParams.get('category') || 'all';
@@ -140,8 +142,10 @@ function Demands() {
   const handleNeighborhoodToggle = () => {
     if (userNeighborhoodParam) {
       updateSearchParams({ userNeighborhood: undefined, page: '1' });
+    } else if (user?.neighborhood) {
+      updateSearchParams({ userNeighborhood: user.neighborhood, page: '1' });
     } else {
-      updateSearchParams({ userNeighborhood: '阳光花园小区', page: '1' });
+      alert('请先登录后使用同小区过滤功能');
     }
   };
 

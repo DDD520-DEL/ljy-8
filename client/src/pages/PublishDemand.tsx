@@ -32,6 +32,7 @@ function PublishDemand() {
   const [urgency, setUrgency] = useState<'normal' | 'urgent' | 'very_urgent'>('normal');
   const [contactPhone, setContactPhone] = useState('');
   const [contactAddress, setContactAddress] = useState('');
+  const [validUntil, setValidUntil] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -58,6 +59,7 @@ function PublishDemand() {
       setUrgency(demand.urgency);
       setContactPhone(demand.contactPhone || '');
       setContactAddress(demand.contactAddress || '');
+      setValidUntil(demand.validUntil || '');
     }
   };
 
@@ -88,6 +90,7 @@ function PublishDemand() {
       urgency,
       contactPhone: contactPhone.trim() || undefined,
       contactAddress: contactAddress.trim() || undefined,
+      validUntil: validUntil || undefined,
     };
 
     try {
@@ -221,6 +224,19 @@ function PublishDemand() {
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div className="form-group">
+              <label>有效期至</label>
+              <input
+                type="datetime-local"
+                className="form-control"
+                value={validUntil}
+                onChange={(e) => setValidUntil(e.target.value)}
+              />
+              <p className="form-hint">
+                可选，设置需求的有效截止时间，过期后需求将自动失效
+              </p>
             </div>
           </div>
 
