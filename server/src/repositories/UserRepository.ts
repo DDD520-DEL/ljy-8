@@ -30,7 +30,7 @@ export class UserRepository {
     return db.findOne<User>(this.collection, (user) => user.email === email);
   }
 
-  public create(userData: Omit<User, 'id' | 'createdAt' | 'creditScore' | 'creditLevel' | 'role' | 'avatar' | 'timeCoins'>): User {
+  public create(userData: Omit<User, 'id' | 'createdAt' | 'creditScore' | 'creditLevel' | 'role' | 'avatar' | 'timeCoins' | 'isVerified'>): User {
     const hashedPassword = bcrypt.hashSync(userData.password, 10);
     const user: User = {
       id: generateId(),
@@ -41,6 +41,7 @@ export class UserRepository {
       creditLevel: getCreditLevel(80),
       timeCoins: 10,
       role: 'user',
+      isVerified: false,
       createdAt: getCurrentTime(),
     };
     return db.insert<User>(this.collection, user);
@@ -65,6 +66,7 @@ export class UserRepository {
       creditLevel: user.creditLevel,
       neighborhood: user.neighborhood,
       role: user.role,
+      isVerified: user.isVerified,
       createdAt: user.createdAt,
     };
   }

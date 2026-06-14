@@ -88,6 +88,15 @@ export class ItemRepository {
     const sortOrder = sort.sortOrder || 'desc';
 
     items.sort((a, b) => {
+      const ownerA = userRepository.findById(a.ownerId);
+      const ownerB = userRepository.findById(b.ownerId);
+      const isVerifiedA = ownerA?.isVerified ? 1 : 0;
+      const isVerifiedB = ownerB?.isVerified ? 1 : 0;
+      
+      if (isVerifiedA !== isVerifiedB) {
+        return isVerifiedB - isVerifiedA;
+      }
+
       let comparison = 0;
 
       switch (sortBy) {

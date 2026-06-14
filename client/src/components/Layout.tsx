@@ -138,6 +138,9 @@ function Layout() {
                     <Link to="/admin/dashboard" className="nav-link">
                       📊 数据看板
                     </Link>
+                    <Link to="/admin/verification" className="nav-link">
+                      ✅ 认证审核
+                    </Link>
                     <Link to="/admin/announcements" className="nav-link">
                       📢 公告管理
                     </Link>

@@ -6,8 +6,27 @@ export interface PublicUser {
   creditLevel: string;
   neighborhood: string;
   role?: 'user' | 'admin';
+  isVerified: boolean;
   timeCoins?: number;
   createdAt: string;
+}
+
+export type VerificationStatus = 'pending' | 'approved' | 'rejected';
+
+export interface UserVerification {
+  id: string;
+  userId: string;
+  realName: string;
+  houseNumber: string;
+  status: VerificationStatus;
+  rejectReason?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  createdAt: string;
+}
+
+export interface UserVerificationWithUser extends UserVerification {
+  user: PublicUser;
 }
 
 export interface Item {

@@ -24,6 +24,7 @@ import AdminShopManage from './pages/AdminShopManage';
 import AnnouncementsList from './pages/AnnouncementsList';
 import AnnouncementDetail from './pages/AnnouncementDetail';
 import AdminAnnouncementManage from './pages/AdminAnnouncementManage';
+import AdminVerificationManage from './pages/AdminVerificationManage';
 import Donations from './pages/Donations';
 import DonationDetail from './pages/DonationDetail';
 import PublishDonation from './pages/PublishDonation';
@@ -206,6 +207,14 @@ function App() {
           element={
             <PrivateRoute>
               <AdminAnnouncementManage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="admin/verification"
+          element={
+            <PrivateRoute>
+              <AdminVerificationManage />
             </PrivateRoute>
           }
         />

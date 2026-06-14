@@ -340,4 +340,15 @@ export const demandApi = {
     request(`/demands/orders/${id}/complete`, { method: 'PUT' }),
 };
 
+export const verificationApi = {
+  getMyVerification: () => request('/verification/my'),
+  submitVerification: (data: { realName: string; houseNumber: string }) =>
+    request('/verification/submit', { method: 'POST', data }),
+  getVerificationList: (params?: { status?: string; page?: number; pageSize?: number }) =>
+    request('/verification/list', { params }),
+  getVerificationById: (id: string) => request(`/verification/${id}`),
+  reviewVerification: (id: string, data: { status: 'approved' | 'rejected'; rejectReason?: string }) =>
+    request(`/verification/${id}/review`, { method: 'PUT', data }),
+};
+
 export default api;

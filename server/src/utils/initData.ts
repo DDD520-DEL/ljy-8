@@ -19,6 +19,9 @@ const sampleUsers = [
     timeCoins: 100,
     neighborhood: '阳光花园小区',
     role: 'admin' as const,
+    isVerified: true,
+    realName: '系统管理员',
+    houseNumber: '物业办公室',
     createdAt: getCurrentTime(),
   },
   {
@@ -33,6 +36,9 @@ const sampleUsers = [
     timeCoins: 25,
     neighborhood: '阳光花园小区',
     role: 'user' as const,
+    isVerified: true,
+    realName: '张三',
+    houseNumber: '3栋2单元502室',
     createdAt: getCurrentTime(),
   },
   {
@@ -47,6 +53,7 @@ const sampleUsers = [
     timeCoins: 15,
     neighborhood: '阳光花园小区',
     role: 'user' as const,
+    isVerified: false,
     createdAt: getCurrentTime(),
   },
   {
@@ -61,6 +68,9 @@ const sampleUsers = [
     timeCoins: 30,
     neighborhood: '阳光花园小区',
     role: 'user' as const,
+    isVerified: true,
+    realName: '王五',
+    houseNumber: '1栋1单元301室',
     createdAt: getCurrentTime(),
   },
   {
@@ -75,6 +85,7 @@ const sampleUsers = [
     timeCoins: 20,
     neighborhood: '阳光花园小区',
     role: 'user' as const,
+    isVerified: false,
     createdAt: getCurrentTime(),
   },
 ];

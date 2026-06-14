@@ -15,16 +15,7 @@ export class AnnouncementService {
     return {
       ...announcement,
       publisher: publisher
-        ? {
-            id: publisher.id,
-            nickname: publisher.nickname,
-            avatar: publisher.avatar,
-            creditScore: publisher.creditScore,
-            creditLevel: publisher.creditLevel,
-            neighborhood: publisher.neighborhood,
-            role: publisher.role,
-            createdAt: publisher.createdAt,
-          }
+        ? userRepository.toPublicUser(publisher)
         : {
             id: announcement.publisherId,
             nickname: '未知用户',
@@ -34,6 +25,7 @@ export class AnnouncementService {
             neighborhood: '',
             role: 'user',
             createdAt: '',
+            isVerified: false,
           },
     };
   }

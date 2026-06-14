@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { authApi, itemApi, skillApi, reviewApi, queueApi, transactionApi, favoriteApi, followApi } from '../api';
+import { authApi, itemApi, skillApi, reviewApi, queueApi, transactionApi, favoriteApi, followApi, verificationApi } from '../api';
+import type { UserVerification } from '../types';
 import type {
   ItemWithOwner,
   SkillWithProvider,
@@ -46,6 +47,10 @@ function Profile() {
   const [followingList, setFollowingList] = useState<FollowWithDetail[]>([]);
   const [followerList, setFollowerList] = useState<FollowerWithDetail[]>([]);
   const [followingLatestSkills, setFollowingLatestSkills] = useState<SkillWithProvider[]>([]);
+  const [myVerification, setMyVerification] = useState<UserVerification | null>(null);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [verifyForm, setVerifyForm] = useState({ realName: '', houseNumber: '' });
+  const [submittingVerify, setSubmittingVerify] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'items') {
@@ -80,6 +85,10 @@ function Profile() {
       loadDepositTransactions();
     }
   }, [depositFilter]);
+
+  useEffect(() => {
+    loadMyVerification();
+  }, []);
 
   useEffect(() => {
     if (activeTab === 'timecoin') {
@@ -159,6 +168,34 @@ function Profile() {
   const loadFollowingLatestSkills = async () => { const res = await followApi.getFollowingLatestSkills(); if (res.success) setFollowingLatestSkills(res.data || []); };
   const handleRemoveFavorite = async (itemId: string) => { const res = await favoriteApi.removeFavorite(itemId); if (res.success) loadFavoriteItems(); else alert(res.message || '取消收藏失败'); };
   const handleUnfollow = async (userId: string) => { const res = await followApi.unfollowUser(userId); if (res.success) loadFollowing(); else alert(res.message || '取消关注失败'); };
+
+  const loadMyVerification = async () => {
+    const res = await verificationApi.getMyVerification();
+    if (res.success) {
+      setMyVerification(res.data || null);
+    }
+  };
+
+  const handleSubmitVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!verifyForm.realName || !verifyForm.houseNumber) {
+      alert('请填写真实姓名和门牌号');
+      return;
+    }
+    setSubmittingVerify(true);
+    try {
+      const res = await verificationApi.submitVerification(verifyForm);
+      if (res.success) {
+        alert('认证申请已提交，请等待管理员审核');
+        setShowVerifyModal(false);
+        loadMyVerification();
+      } else {
+        alert(res.message || '提交失败');
+      }
+    } finally {
+      setSubmittingVerify(false);
+    }
+  };
 
   const loadNotifications = async () => {
     const res = await queueApi.getNotifications();
@@ -286,7 +323,14 @@ function Profile() {
         <div className="profile-avatar">
           <img src={user?.avatar} alt="" className="avatar avatar-lg" />
           <div className="profile-info">
-            <h2>{user?.nickname}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h2 style={{ margin: 0 }}>{user?.nickname}</h2>
+              {user?.isVerified && (
+                <span className="verified-badge" title="已认证用户">
+                  ✓ 已认证
+                </span>
+              )}
+            </div>
             <p className="text-muted">{user?.neighborhood}</p>
             <div className="credit-info">
               <span
@@ -440,6 +484,26 @@ function Profile() {
               <span className="info-label">时间币余额</span>
               <span className="info-value time-coins-value">⏰ {user?.timeCoins || 0}</span>
             </div>
+            <div className="info-row">
+              <span className="info-label">身份认证</span>
+              <span className="info-value">
+                {user?.isVerified ? (
+                  <span className="verified-tag">✓ 已认证</span>
+                ) : myVerification?.status === 'pending' ? (
+                  <span className="pending-tag">⏳ 审核中</span>
+                ) : (
+                  <button className="btn btn-primary btn-sm" onClick={() => setShowVerifyModal(true)}>
+                    去认证
+                  </button>
+                )}
+              </span>
+            </div>
+            {myVerification?.status === 'rejected' && (
+              <div className="reject-reason">
+                <span className="info-label">拒绝原因</span>
+                <span className="info-value" style={{ color: '#ff4d4f' }}>{myVerification.rejectReason}</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -995,6 +1059,59 @@ function Profile() {
           退出登录
         </button>
       </div>
+
+      {showVerifyModal && (
+        <div className="modal-overlay" onClick={() => setShowVerifyModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>身份认证</h3>
+              <button className="modal-close" onClick={() => setShowVerifyModal(false)}>
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleSubmitVerification}>
+              <div className="form-group">
+                <label className="form-label">真实姓名</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={verifyForm.realName}
+                  onChange={(e) => setVerifyForm({ ...verifyForm, realName: e.target.value })}
+                  placeholder="请输入您的真实姓名"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">小区门牌号</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={verifyForm.houseNumber}
+                  onChange={(e) => setVerifyForm({ ...verifyForm, houseNumber: e.target.value })}
+                  placeholder="例如：3栋2单元501室"
+                  required
+                />
+              </div>
+              <div className="verify-tip">
+                <p>💡 提交认证后，管理员将在1-3个工作日内审核。</p>
+                <p>认证通过后，您发布的物品和技能将获得优先展示。</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowVerifyModal(false)}
+                >
+                  取消
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={submittingVerify}>
+                  {submittingVerify ? '提交中...' : '提交认证'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showConfirmModal && selectedQueue && (
         <div className="modal-overlay" onClick={() => setShowConfirmModal(false)}>
@@ -1740,6 +1857,61 @@ function Profile() {
         .logout-section {
           text-align: center;
           margin-top: 24px;
+        }
+        .verified-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 2px 10px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 600;
+          background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+          color: white;
+        }
+        .verified-tag {
+          display: inline-flex;
+          align-items: center;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 13px;
+          font-weight: 600;
+          background: #f6ffed;
+          color: #52c41a;
+          border: 1px solid #b7eb8f;
+        }
+        .pending-tag {
+          display: inline-flex;
+          align-items: center;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 13px;
+          font-weight: 600;
+          background: #fff7e6;
+          color: #fa8c16;
+          border: 1px solid #ffd591;
+        }
+        .reject-reason {
+          margin-top: 12px;
+          padding: 12px;
+          background: #fff1f0;
+          border-radius: 8px;
+        }
+        .reject-reason .info-label {
+          display: block;
+          margin-bottom: 4px;
+          color: #ff4d4f;
+          font-size: 12px;
+        }
+        .verify-tip {
+          background: #f0f5ff;
+          padding: 12px 16px;
+          border-radius: 8px;
+          margin-bottom: 16px;
+        }
+        .verify-tip p {
+          margin: 4px 0;
+          font-size: 13px;
+          color: #667eea;
         }
         .text-muted {
           color: #999;

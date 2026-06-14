@@ -7,7 +7,18 @@ export class SkillRepository {
   private collection = 'skills';
 
   public findAll(): Skill[] {
-    return db.getAll<Skill>(this.collection);
+    const skills = db.getAll<Skill>(this.collection);
+    return skills.sort((a, b) => {
+      const providerA = userRepository.findById(a.providerId);
+      const providerB = userRepository.findById(b.providerId);
+      const isVerifiedA = providerA?.isVerified ? 1 : 0;
+      const isVerifiedB = providerB?.isVerified ? 1 : 0;
+      
+      if (isVerifiedA !== isVerifiedB) {
+        return isVerifiedB - isVerifiedA;
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   }
 
   public findById(id: string): Skill | undefined {
