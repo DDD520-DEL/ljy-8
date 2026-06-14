@@ -31,6 +31,12 @@ function SkillDetail() {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (skill && isAuthenticated && skill.providerId !== user?.id) {
+      loadFollowStatus();
+    }
+  }, [skill, isAuthenticated]);
+
   const loadFollowStatus = async () => {
     if (!skill) return;
     const res = await followApi.checkFollow(skill.providerId);

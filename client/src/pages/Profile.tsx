@@ -52,6 +52,14 @@ function Profile() {
       loadMyItems();
     } else if (activeTab === 'skills') {
       loadMySkills();
+    } else if (activeTab === 'favorites') {
+      loadFavoriteItems();
+    } else if (activeTab === 'following') {
+      loadFollowing();
+    } else if (activeTab === 'followers') {
+      loadFollowers();
+    } else if (activeTab === 'following-feed') {
+      loadFollowingLatestSkills();
     } else if (activeTab === 'reviews') {
       loadMyReviews();
     } else if (activeTab === 'posted-reviews') {

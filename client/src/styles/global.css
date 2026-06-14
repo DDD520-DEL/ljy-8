@@ -229,6 +229,75 @@ input, textarea, select {
   width: 100%;
 }
 
+.favorite-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid #e8e8e8;
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+
+.favorite-btn:hover {
+  border-color: #ff4d4f;
+  background: #fff1f0;
+}
+
+.favorite-btn.favorited {
+  border-color: #ff4d4f;
+  background: #fff1f0;
+  color: #ff4d4f;
+}
+
+.favorite-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.follow-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  border: 1px solid #667eea;
+  border-radius: 20px;
+  background: white;
+  color: #667eea;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.follow-btn:hover {
+  background: #667eea;
+  color: white;
+}
+
+.follow-btn.following {
+  background: #f0f2ff;
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.follow-btn.following:hover {
+  background: #ff4d4f;
+  border-color: #ff4d4f;
+  color: white;
+}
+
+.follow-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .text-center {
   text-align: center;
 }

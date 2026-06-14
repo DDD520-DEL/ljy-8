@@ -41,6 +41,10 @@ function ItemDetail() {
   useEffect(() => {
     if (id && isAuthenticated) {
       loadQueueInfo();
+      loadFavoriteStatus();
+    }
+    if (id) {
+      loadFavoriteCount();
     }
   }, [id, isAuthenticated]);
 
